@@ -1,5 +1,5 @@
 use mlua::prelude::*;
-use std::{env, fs, process::Command, string};
+use std::{env, fs, process::Command};
 
 fn main() -> Result<(), mlua::Error> {
     let lua = Lua::new();
@@ -24,7 +24,7 @@ fn main() -> Result<(), mlua::Error> {
     }
 
     let raw_packages = String::from_utf8(output.stdout).unwrap();
-    let packages : Vec<&str> = raw_packages.lines().collect();
+    let mut packages : Vec<&str> = raw_packages.lines().collect();
     /*
     for value in &packages {
         println!("{}", value);
@@ -52,7 +52,8 @@ fn main() -> Result<(), mlua::Error> {
                 let string_str = string.to_str().unwrap();
 
                 if packages.contains(&string_str) {
-                    print!("Found");
+                    let index = packages.iter().position(|&r| r == string_str);
+                    packages.remove(index.unwrap());
                 }
 
                 println!("{:?}", string);
@@ -62,6 +63,10 @@ fn main() -> Result<(), mlua::Error> {
             _ => (),
 
         }
+    }
+
+    for value in &packages {
+        println!("{}", value);
     }
 
     Ok(())
