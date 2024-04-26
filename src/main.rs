@@ -1,4 +1,5 @@
 use mlua::prelude::*;
+use core::panic;
 use std::{env, fs, process::Command};
 
 fn main() -> Result<(), mlua::Error> {
@@ -15,13 +16,17 @@ fn main() -> Result<(), mlua::Error> {
 
     // Get currently installed packages
     let output = Command::new("pacman")
-    .arg("-Qeq")
+    .arg("-Qet")
     .output()
     .expect("Failed to execute command");
 
     if output.status.success() {
-        let packages = String::from_utf8(output.stdout).unwrap();
-        println!("{}", packages);
+        let raw_packages = String::from_utf8(output.stdout).unwrap();
+        let packages : Vec<&str> = raw_packages.lines().collect();
+        for value in &packages {
+            println!("{}", value);
+        }
+        
     } else {
         println!("Command executed with failing error code");
     }
