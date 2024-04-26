@@ -1,5 +1,4 @@
 use mlua::prelude::*;
-use core::panic;
 use std::{env, fs, process::Command};
 
 fn main() -> Result<(), mlua::Error> {
@@ -20,15 +19,14 @@ fn main() -> Result<(), mlua::Error> {
     .output()
     .expect("Failed to execute command");
 
-    if output.status.success() {
-        let raw_packages = String::from_utf8(output.stdout).unwrap();
-        let packages : Vec<&str> = raw_packages.lines().collect();
-        for value in &packages {
-            println!("{}", value);
-        }
-        
-    } else {
+    if !output.status.success() {
         println!("Command executed with failing error code");
+    }
+
+    let raw_packages = String::from_utf8(output.stdout).unwrap();
+    let packages : Vec<&str> = raw_packages.lines().collect();
+    for value in packages {
+        println!("{}", value);
     }
 
     // Get the 'config' table and iterate over it's values
