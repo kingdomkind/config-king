@@ -56,7 +56,7 @@ fn main() -> Result<(), mlua::Error> {
                     packages.remove(index.unwrap());
                 }
 
-                println!("{:?}", string);
+                //println!("{:?}", string);
             },
 
             // Catch all function
