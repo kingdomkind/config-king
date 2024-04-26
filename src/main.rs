@@ -1,5 +1,5 @@
 use mlua::prelude::*;
-use std::{env, fs, process::Command};
+use std::{env, fs, process::Command, string};
 
 fn main() -> Result<(), mlua::Error> {
     let lua = Lua::new();
@@ -25,9 +25,10 @@ fn main() -> Result<(), mlua::Error> {
 
     let raw_packages = String::from_utf8(output.stdout).unwrap();
     let packages : Vec<&str> = raw_packages.lines().collect();
-    for value in packages {
+    /*
+    for value in &packages {
         println!("{}", value);
-    }
+    }*/
 
     // Get the 'config' table and iterate over it's values
     let config: mlua::Table = globals.get("Config")?;
@@ -47,6 +48,13 @@ fn main() -> Result<(), mlua::Error> {
             */
             // Seeing if the value is of type STRING
             mlua::Value::String(string) => {
+
+                let string_str = string.to_str().unwrap();
+
+                if packages.contains(&string_str) {
+                    print!("Found");
+                }
+
                 println!("{:?}", string);
             },
 
