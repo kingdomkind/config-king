@@ -15,7 +15,7 @@ fn main() -> Result<(), mlua::Error> {
 
     // Get currently installed packages
     let output = Command::new("pacman")
-    .arg("-Qet")
+    .arg("-Qeq")
     .output()
     .expect("Failed to execute command");
 
