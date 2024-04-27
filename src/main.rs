@@ -46,13 +46,16 @@ fn main() -> Result<(), mlua::Error> {
                     let index = packages.iter().position(|&r| r == string_str);
                     packages.remove(index.unwrap());
                 } else {
+                    println!("Doesnt contain..");
+
                     let output = Command::new("pacman")
                     .arg("-S signal-desktop")
                     .arg("--noconfirm")
                     .output()
                     .expect("Failed to execute command");
-
-                    println!("{} and {:?}", string_str, output);
+                
+                    println!("{}", string_str);
+                    println!("{:?}", output);
                 }
             },
 
