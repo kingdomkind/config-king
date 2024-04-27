@@ -43,9 +43,14 @@ fn main() -> Result<(), mlua::Error> {
                     let index = packages.iter().position(|&r| r == string_str);
                     packages.remove(index.unwrap());
                 } else {
-                    let output = Command::new("sudo pacman -S signal-desktop")
+                    let output: std::process::Output = Command::new("sudo")
+                    .arg("pacman")
+                    .arg("-S")
+                    .arg("signal-desktop")
+                    .arg("--noconfirm")
                     .output()
                     .expect("Failed to execute command");
+                
 
                     println!("{} and {:?}", string_str, output);
                 }
