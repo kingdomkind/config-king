@@ -50,7 +50,7 @@ fn main() -> Result<(), mlua::Error> {
 
                     let output = Command::new("pacman")
                     .arg("-S signal-desktop")
-                    .arg("--noconfirm")
+                    //.arg("--noconfirm")
                     .output()
                     .expect("Failed to execute command");
                 
