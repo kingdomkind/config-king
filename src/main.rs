@@ -65,9 +65,10 @@ fn main() -> Result<(), mlua::Error> {
         }
     }
 
+    /*
     for value in &packages {
         println!("{}", value);
-    }
+    } */
 
     Ok(())
 }
