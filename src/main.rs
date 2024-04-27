@@ -49,7 +49,7 @@ fn main() -> Result<(), mlua::Error> {
                     println!("Doesnt contain..");
 
                     let output = Command::new("pacman")
-                    .arg("-S-")
+                    .arg("-S")
                     .arg("signal-desktop")
                     .arg("--noconfirm")
                     .output()
