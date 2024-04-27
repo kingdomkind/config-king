@@ -79,7 +79,7 @@ fn main() -> Result<(), mlua::Error> {
         if output.status.success() {
             println!("Removed {}...", value);
         } else {
-            println!("{:?}", String::from_utf8_lossy(&output.stderr));
+            println!("Failed: Stdout: {:?}, Stderr: {:?}", String::from_utf8_lossy(&output.stdout), String::from_utf8_lossy(&output.stderr));
         }
     }
 
