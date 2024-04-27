@@ -27,10 +27,6 @@ fn main() -> Result<(), mlua::Error> {
 
     let raw_packages = String::from_utf8(output.stdout).unwrap();
     let mut packages : Vec<&str> = raw_packages.lines().collect();
-    /*
-    for value in &packages {
-        println!("{}", value);
-    }*/
 
     // Get the 'config' table and iterate over it's values
     let config: mlua::Table = globals.get("Config")?;
@@ -47,14 +43,12 @@ fn main() -> Result<(), mlua::Error> {
                     let index = packages.iter().position(|&r| r == string_str);
                     packages.remove(index.unwrap());
                 } else {
-                    let output = Command::new("sudo pacman -S".to_owned() + &string_str)
+                    let output = Command::new("sudo pacman -S signal-desktop")
                     .output()
                     .expect("Failed to execute command");
 
                     println!("{} and {:?}", string_str, output);
                 }
-
-                //println!("{:?}", string);
             },
 
             // Catch all function
