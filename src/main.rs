@@ -45,9 +45,8 @@ fn main() -> Result<(), mlua::Error> {
                 if packages.contains(&string_str) {
                     let index = packages.iter().position(|&r| r == string_str);
                     packages.remove(index.unwrap());
+                    println!("Already Installed {}...", string_str);
                 } else {
-                    println!("Doesnt contain..");
-
                     let output = Command::new("pacman")
                     .arg("-S")
                     .arg(string_str)
@@ -55,8 +54,11 @@ fn main() -> Result<(), mlua::Error> {
                     .output()
                     .expect("Failed to execute command");
                 
-                    println!("{}", string_str);
-                    println!("{:?}", output);
+                    if output.status.success() {
+                        println!("Installed {}...", string_str);
+                    } else {
+                        println!("{:?}", output.stderr);
+                    }
                 }
             },
 
