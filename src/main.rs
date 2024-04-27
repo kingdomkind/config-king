@@ -36,16 +36,6 @@ fn main() -> Result<(), mlua::Error> {
         let (_key, value) = pair?;
         match value {
 
-            /* CURRENTLY THE EXTRA FUNCTIONALITY PROVIDED BY TABLES IS NOT YET IMPLEMENTED, AS I YET TO HAVE A USE FOR IT. WHEN I DO, IT WILL BE IMPLEMENTED
-            // Seeing if the value is of type TABLE
-            mlua::Value::Table(table) => {
-                for pair in table.pairs::<mlua::Value, mlua::Value>() {
-                    let (_index, value) = pair?;
-                    println!("{:?} = {:?}", key, value);
-                }
-            },
-
-            */
             // Seeing if the value is of type STRING
             mlua::Value::String(string) => {
 
@@ -54,6 +44,13 @@ fn main() -> Result<(), mlua::Error> {
                 if packages.contains(&string_str) {
                     let index = packages.iter().position(|&r| r == string_str);
                     packages.remove(index.unwrap());
+                } else {
+                    let output = Command::new("sudo pacman")
+                    .arg("-S ".to_owned() + &string_str)
+                    .output()
+                    .expect("Failed to execute command");
+
+                    println!("{} and {:?}", string_str, output);
                 }
 
                 //println!("{:?}", string);
