@@ -45,7 +45,7 @@ fn main() -> Result<(), mlua::Error> {
                 if packages.contains(&string_str) {
                     let index = packages.iter().position(|&r| r == string_str);
                     packages.remove(index.unwrap());
-                    println!("Already Installed {}...", string_str);
+                    // println!("Already Installed {}...", string_str);
                 } else {
                     let output = Command::new("pacman")
                     .arg("-S")
@@ -69,7 +69,18 @@ fn main() -> Result<(), mlua::Error> {
     }
 
     for value in &packages {
-        println!("I want to remove {}...", value);
+        let output = Command::new("pacman")
+        .arg("-R")
+        .arg(value)
+        .arg("--noconfirm")
+        .output()
+        .expect("Failed to execute command");
+
+        if output.status.success() {
+            println!("Removed {}...", value);
+        } else {
+            println!("{:?}", String::from_utf8_lossy(&output.stderr));
+        }
     }
 
     Ok(())

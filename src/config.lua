@@ -31,7 +31,7 @@ Config = {
     "xfwm4",
     "xfwm4-themes",
     "xorg-bdftopcf",
-    "xorg-docs",
+    --"xorg-docs",
     "xorg-font-util",
     "xorg-fonts-100dpi",
     "xorg-fonts-75dpi",
