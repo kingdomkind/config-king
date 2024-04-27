@@ -49,8 +49,9 @@ fn main() -> Result<(), mlua::Error> {
                     println!("Doesnt contain..");
 
                     let output = Command::new("pacman")
-                    .arg("-S signal-desktop")
-                    //.arg("--noconfirm")
+                    .arg("-S-")
+                    .arg("signal-desktop")
+                    .arg("--noconfirm")
                     .output()
                     .expect("Failed to execute command");
                 
