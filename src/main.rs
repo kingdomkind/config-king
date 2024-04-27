@@ -57,7 +57,7 @@ fn main() -> Result<(), mlua::Error> {
                     if output.status.success() {
                         println!("Installed {}...", string_str);
                     } else {
-                        println!("{:?}", output.stderr);
+                        println!("{:?}", String::from_utf8_lossy(&output.stderr));
                     }
                 }
             },
