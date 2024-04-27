@@ -9,4 +9,5 @@ Config = {
     "networkmanager",
     "openssh",
     "rustup",
+    "hyprland",
 }
