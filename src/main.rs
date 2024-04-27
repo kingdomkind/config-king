@@ -80,6 +80,14 @@ fn main() -> Result<(), mlua::Error> {
             println!("Removed {}...", value);
         } else {
             println!("Failed: Stdout: {:?}, Stderr: {:?}", String::from_utf8_lossy(&output.stdout), String::from_utf8_lossy(&output.stderr));
+
+            let dep = Command::new("pacman")
+            .arg("-D")
+            .arg("--asdep")
+            .arg(value)
+            .output()
+            .expect("Failed to execute command");
+            println!("Marking {:?} as dependency, try re-running command", value);
         }
     }
 
