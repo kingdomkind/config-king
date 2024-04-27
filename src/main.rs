@@ -76,7 +76,9 @@ fn main() -> Result<(), mlua::Error> {
         .output()
         .expect("Failed");
 
-        println!("stdout: {}", String::from_utf8_lossy(&group.stdout));
+        if String::from_utf8_lossy(&group.stdout) != "" {
+            println!("stdout: {}", String::from_utf8_lossy(&group.stdout));
+        }
 
         let output = Command::new("pacman")
         .arg("-Rns")
