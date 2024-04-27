@@ -11,7 +11,6 @@ fn main() -> Result<(), mlua::Error> {
     .expect("Unable to convert current directory to str").to_string() + "/src/config.lua")?;
     println!("got here! 2");
 
-
     // Load the Lua script
     let globals = lua.globals();
     lua.load(&lua_script).exec()?;
@@ -51,11 +50,13 @@ fn main() -> Result<(), mlua::Error> {
                     let index = packages.iter().position(|&r| r == string_str);
                     packages.remove(index.unwrap());
                 } else {
-                    //let output = Command::new("pacman -S signal-desktop --noconfirm")
-                    //.output()
-                    //.expect("Failed to execute command");
+                    let output = Command::new("pacman")
+                    .arg("-S signal-desktop")
+                    .arg("--noconfirm")
+                    .output()
+                    .expect("Failed to execute command");
 
-                    //println!("{} and {:?}", string_str, output);
+                    println!("{} and {:?}", string_str, output);
                 }
             },
 
