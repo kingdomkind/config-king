@@ -69,18 +69,6 @@ fn main() -> Result<(), mlua::Error> {
     }
 
     for value in &packages {
-
-        let group = Command::new("expac")
-        .arg("'%G'")
-        .arg(value)
-        .output()
-        .expect("Failed");
-
-        if String::from_utf8_lossy(&group.stdout) != "" {
-            println!("stdout: {}", String::from_utf8_lossy(&group.stdout));
-            break;
-        }
-
         let output = Command::new("pacman")
         .arg("-Rns")
         .arg(value)

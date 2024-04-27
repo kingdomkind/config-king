@@ -3,7 +3,6 @@ Config = {
     "nano",
     "base",
     "base-devel",
-    "efibootmgr",
     "firefox",
     "git",
     "grub",
@@ -12,6 +11,5 @@ Config = {
     "networkmanager",
     "openssh",
     "rustup",
-    "xfce4",
-    "xorg",
+    "hyprland",
 }
