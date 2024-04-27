@@ -70,7 +70,7 @@ fn main() -> Result<(), mlua::Error> {
 
     for value in &packages {
         let output = Command::new("pacman")
-        .arg("-R")
+        .arg("-Rns")
         .arg(value)
         .arg("--noconfirm")
         .output()
