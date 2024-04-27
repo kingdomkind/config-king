@@ -3,7 +3,6 @@ Config = {
     "nano",
     "base",
     "base-devel",
-    "firefox",
     "git",
     "grub",
     "linux",
