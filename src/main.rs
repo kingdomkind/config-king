@@ -4,10 +4,13 @@ use std::{env, fs, process::Command};
 fn main() -> Result<(), mlua::Error> {
     let lua = Lua::new();
 
+    println!("got here! 1");
     // Read the Lua file -- relative diretory should be ran from project base for testing (ie. in the main folder)
     let lua_script: String = fs::read_to_string(env::current_dir()
     .expect("Unable to get current directory").to_str()
     .expect("Unable to convert current directory to str").to_string() + "/src/config.lua")?;
+    println!("got here! 2");
+
 
     // Load the Lua script
     let globals = lua.globals();
@@ -31,7 +34,7 @@ fn main() -> Result<(), mlua::Error> {
     let raw_packages = String::from_utf8(output.stdout).unwrap();
     let mut packages : Vec<&str> = raw_packages.lines().collect();
 
-    println!("got here!");
+    println!("got here! 3");
 
     // Get the 'config' table and iterate over it's values
     let config: mlua::Table = globals.get("Config")?;
