@@ -22,10 +22,10 @@ fn main() -> Result<(), mlua::Error> {
     .output()
     .expect("Failed to execute command");
 
-    Command::new("pacman -Syu").output().expect("Failed to exec command");
-    Command::new("pacman -S signal-desktop --noconfirm")
-        .output()
-        .expect("Failed to execute command");
+    Command::new("pacman")
+    .arg("-Syu")
+    .output()
+    .expect("Failed to exec command");
 
     if !output.status.success() {
         println!("Command executed with failing error code");
