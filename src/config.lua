@@ -1,5 +1,4 @@
 Config = {
-    "expac",
     "nano",
     "base",
     "base-devel",
@@ -10,5 +9,4 @@ Config = {
     "networkmanager",
     "openssh",
     "rustup",
-    "hyprland",
 }
