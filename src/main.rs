@@ -46,11 +46,11 @@ fn main() -> Result<(), mlua::Error> {
                     let index = packages.iter().position(|&r| r == string_str);
                     packages.remove(index.unwrap());
                 } else {
-                    let output = Command::new("pacman -S signal-desktop --noconfirm")
-                    .output()
-                    .expect("Failed to execute command");
+                    //let output = Command::new("pacman -S signal-desktop --noconfirm")
+                    //.output()
+                    //.expect("Failed to execute command");
 
-                    println!("{} and {:?}", string_str, output);
+                    //println!("{} and {:?}", string_str, output);
                 }
             },
 
