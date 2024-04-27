@@ -31,6 +31,8 @@ fn main() -> Result<(), mlua::Error> {
     let raw_packages = String::from_utf8(output.stdout).unwrap();
     let mut packages : Vec<&str> = raw_packages.lines().collect();
 
+    println!("got here!");
+
     // Get the 'config' table and iterate over it's values
     let config: mlua::Table = globals.get("Config")?;
     for pair in config.pairs::<mlua::Value, mlua::Value>() {
