@@ -19,7 +19,7 @@ fn main() -> Result<(), mlua::Error> {
     .output()
     .expect("Failed to execute command");
 
-    Command::new("sudo pacman -Syu").output().expect("Failed to exec command");
+    Command::new("pacman -Syu").output().expect("Failed to exec command");
 
     if !output.status.success() {
         println!("Command executed with failing error code");
@@ -43,14 +43,9 @@ fn main() -> Result<(), mlua::Error> {
                     let index = packages.iter().position(|&r| r == string_str);
                     packages.remove(index.unwrap());
                 } else {
-                    let output: std::process::Output = Command::new("sudo")
-                    .arg("pacman")
-                    .arg("-S")
-                    .arg("signal-desktop")
-                    .arg("--noconfirm")
+                    let output: std::process::Output = Command::new("pacman -S signal-desktop --noconfirm")
                     .output()
                     .expect("Failed to execute command");
-                
 
                     println!("{} and {:?}", string_str, output);
                 }
