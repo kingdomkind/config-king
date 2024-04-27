@@ -78,6 +78,7 @@ fn main() -> Result<(), mlua::Error> {
 
         if String::from_utf8_lossy(&group.stdout) != "" {
             println!("stdout: {}", String::from_utf8_lossy(&group.stdout));
+            break;
         }
 
         let output = Command::new("pacman")
