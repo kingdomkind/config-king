@@ -45,8 +45,7 @@ fn main() -> Result<(), mlua::Error> {
                     let index = packages.iter().position(|&r| r == string_str);
                     packages.remove(index.unwrap());
                 } else {
-                    let output = Command::new("sudo pacman")
-                    .arg("-S ".to_owned() + &string_str)
+                    let output = Command::new("sudo pacman -S".to_owned() + &string_str)
                     .output()
                     .expect("Failed to execute command");
 
