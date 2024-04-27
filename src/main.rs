@@ -69,7 +69,7 @@ fn main() -> Result<(), mlua::Error> {
     }
 
     for value in &packages {
-        println!("{}", value);
+        println!("I want to remove {}...", value);
     }
 
     Ok(())
