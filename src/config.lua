@@ -1,4 +1,5 @@
 Config = {
+    "expac",
     "nano",
     "base",
     "base-devel",
