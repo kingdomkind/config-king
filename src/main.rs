@@ -19,6 +19,8 @@ fn main() -> Result<(), mlua::Error> {
     .output()
     .expect("Failed to execute command");
 
+    Command::new("sudo pacman -Syu").output().expect("Failed to exec command");
+
     if !output.status.success() {
         println!("Command executed with failing error code");
     }
