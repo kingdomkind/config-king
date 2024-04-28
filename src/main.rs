@@ -79,6 +79,7 @@ fn main() -> Result<(), mlua::Error> {
     dep.arg("-D");
 
     for value in &packages {
+        println!(value);
         output.arg(value);
         dep.arg(value);
     }
