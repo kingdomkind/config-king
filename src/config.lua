@@ -11,8 +11,6 @@ Packages = {
         "openssh",
         "rustup",
         "neofetch",
-        "hyprland",
-        "signal-desktop",
     },
 
     Aur = {
