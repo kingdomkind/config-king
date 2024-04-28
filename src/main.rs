@@ -72,33 +72,38 @@ fn main() -> Result<(), mlua::Error> {
         }
     }
 
-    let mut output = Command::new("pacman");
-    output.arg("--noconfirm");
-    output.arg("-Rns");
 
-    let mut dep = Command::new("pacman");
-    dep.arg("--asdep");
-    dep.arg("-D");
-
-    for value in &packages {
-        println!("{}", value);
-        output.arg(value);
-        dep.arg(value);
-    }
-
-    let dep = dep.output().expect("Failed to set packages to be dependencies!");
-    let output = output.output().expect("Failed to remove packages!");
-
-    if output.status.success() {
-        println!("Removed {:?}...", packages);
+    if packages.len() > 0 {
+        let mut output = Command::new("pacman");
+        output.arg("--noconfirm");
+        output.arg("-Rns");
+    
+        let mut dep = Command::new("pacman");
+        dep.arg("--asdep");
+        dep.arg("-D");
+    
+        for value in &packages {
+            println!("{}", value);
+            output.arg(value);
+            dep.arg(value);
+        }
+    
+        let dep = dep.output().expect("Failed to set packages to be dependencies!");
+        let output = output.output().expect("Failed to remove packages!");
+    
+        if output.status.success() {
+            println!("Removed {:?}...", packages);
+        } else {
+            println!("pacman -Rns failed with: Stdout: {:?}, Stderr: {:?}", String::from_utf8_lossy(&output.stdout), String::from_utf8_lossy(&output.stderr));
+        }
+    
+        if !dep.status.success() {
+            println!("pacman -D failed with: Stdout: {:?}, Stderr: {:?}", String::from_utf8_lossy(&dep.stdout), String::from_utf8_lossy(&dep.stderr));
+        }
+    
+        Command::new("pacman").arg("-Syu").output().expect("Failed to update entire system...");
     } else {
-        println!("pacman -Rns failed with: Stdout: {:?}, Stderr: {:?}", String::from_utf8_lossy(&output.stdout), String::from_utf8_lossy(&output.stderr));
+        println!("No packages to uninstall...")
     }
-
-    if !dep.status.success() {
-        println!("pacman -D failed with: Stdout: {:?}, Stderr: {:?}", String::from_utf8_lossy(&dep.stdout), String::from_utf8_lossy(&dep.stderr));
-    }
-
-    Command::new("pacman").arg("-Syu").output().expect("Failed to update entire system...");
     Ok(())
 }
