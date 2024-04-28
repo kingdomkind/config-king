@@ -49,6 +49,8 @@ fn main() -> Result<(), mlua::Error> {
                     packages.remove(index.unwrap());
                     // println!("Already Installed {}...", string_str);
                 } else {
+                    println!("Attempting to install {}...", string_str);
+
                     let output = Command::new("pacman")
                     .arg("-S")
                     .arg(string_str)
@@ -96,6 +98,7 @@ fn main() -> Result<(), mlua::Error> {
     if !dep.status.success() {
         println!("pacman -D failed with: Stdout: {:?}, Stderr: {:?}", String::from_utf8_lossy(&dep.stdout), String::from_utf8_lossy(&dep.stderr));
     }
-    
+
+    Command::new("pacman").arg("-Syu").output().expect("Failed to update entire system...");
     Ok(())
 }
