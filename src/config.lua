@@ -12,6 +12,7 @@ Packages = {
         "rustup",
         "neofetch",
         "hyprland",
+        "signal-desktop",
     },
 
     Aur = {
