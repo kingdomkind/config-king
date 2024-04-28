@@ -32,8 +32,10 @@ fn main() -> Result<(), mlua::Error> {
     let mut packages : Vec<&str> = raw_packages.lines().collect();
 
     // Get the 'config' table and iterate over it's values
-    let config: mlua::Table = globals.get("Config")?;
-    for pair in config.pairs::<mlua::Value, mlua::Value>() {
+    let packages_table: mlua::Table = globals.get("Packages")?;
+    let default_table: mlua::Table = packages_table.get("Default")?;
+
+    for pair in default_table.pairs::<mlua::Value, mlua::Value>() {
         let (_key, value) = pair?;
         match value {
 
@@ -68,28 +70,27 @@ fn main() -> Result<(), mlua::Error> {
         }
     }
 
+    let mut output = Command::new("pacman");
+    output.arg("-Rns");
+    output.arg("--noconfirm");
+
+    let mut dep = Command::new("pacman");
+    dep.arg("-D");
+    dep.arg("--asdep");
+
     for value in &packages {
-        let output = Command::new("pacman")
-        .arg("-Rns")
-        .arg(value)
-        .arg("--noconfirm")
-        .output()
-        .expect("Failed to execute command");
-
-        if output.status.success() {
-            println!("Removed {}...", value);
-        } else {
-            println!("Failed: Stdout: {:?}, Stderr: {:?}", String::from_utf8_lossy(&output.stdout), String::from_utf8_lossy(&output.stderr));
-
-            let dep = Command::new("pacman")
-            .arg("-D")
-            .arg("--asdep")
-            .arg(value)
-            .output()
-            .expect("Failed to execute command");
-            println!("Marking {:?} as dependency, try re-running command", value);
-        }
+        output.arg(value);
+        dep.arg(value);
     }
 
+    let dep = dep.output().expect("Failed to set packages to be dependencies!");
+    let output = output.output().expect("Failed to remove packages!");
+
+    if output.status.success() {
+        println!("Removed {:?}...", packages);
+    } else {
+        println!("Failed: Stdout: {:?}, Stderr: {:?}", String::from_utf8_lossy(&output.stdout), String::from_utf8_lossy(&output.stderr));
+    }
+    
     Ok(())
 }
