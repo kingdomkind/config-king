@@ -83,7 +83,6 @@ fn main() -> Result<(), mlua::Error> {
         dep.arg("-D");
     
         for value in &packages {
-            println!("{}", value);
             output.arg(value);
             dep.arg(value);
         }
@@ -102,8 +101,8 @@ fn main() -> Result<(), mlua::Error> {
         }
     
         Command::new("pacman").arg("-Syu").output().expect("Failed to update entire system...");
-    } else {
-        println!("No packages to uninstall...")
     }
+
+    println!("Finished...");
     Ok(())
 }
