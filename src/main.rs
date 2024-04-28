@@ -71,12 +71,12 @@ fn main() -> Result<(), mlua::Error> {
     }
 
     let mut output = Command::new("pacman");
-    output.arg("-Rns");
     output.arg("--noconfirm");
+    output.arg("-Rns");
 
     let mut dep = Command::new("pacman");
-    dep.arg("-D");
     dep.arg("--asdep");
+    dep.arg("-D");
 
     for value in &packages {
         output.arg(value);
@@ -89,7 +89,11 @@ fn main() -> Result<(), mlua::Error> {
     if output.status.success() {
         println!("Removed {:?}...", packages);
     } else {
-        println!("Failed: Stdout: {:?}, Stderr: {:?}", String::from_utf8_lossy(&output.stdout), String::from_utf8_lossy(&output.stderr));
+        println!("pacman -Rns failed with: Stdout: {:?}, Stderr: {:?}", String::from_utf8_lossy(&output.stdout), String::from_utf8_lossy(&output.stderr));
+    }
+
+    if !dep.status.success() {
+        println!("pacman -D failed with: Stdout: {:?}, Stderr: {:?}", String::from_utf8_lossy(&dep.stdout), String::from_utf8_lossy(&dep.stderr));
     }
     
     Ok(())
