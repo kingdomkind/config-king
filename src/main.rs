@@ -92,8 +92,8 @@ fn main() -> Result<(), mlua::Error> {
             // TABLE
             mlua::Value::Table(table) => {
                 for pair in table.pairs::<mlua::Value, mlua::Value>() {
-                    let (_index, value) = pair?;
-                    println!("{:?} = {:?} , {:?}", key, value, _index);
+                    let (index, value) = pair?; // index gives the var name, value gives the val
+                    println!("{:?}, {:?}", index.as_string(), value.as_string());
                 }
             },
 
