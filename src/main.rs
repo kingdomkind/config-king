@@ -185,11 +185,13 @@ fn main() -> Result<(), mlua::Error> {
     }
 
     if packages.len() > 0 {
-        let mut output = Command::new("pacman");
+        let mut output = Command::new("sudo");
+        output.arg("pacman");
         output.arg("--noconfirm");
         output.arg("-Rns");
     
-        let mut dep = Command::new("pacman");
+        let mut dep = Command::new("sudo");
+        dep.arg("pacman");
         dep.arg("--asdep");
         dep.arg("-D");
     
@@ -201,8 +203,6 @@ fn main() -> Result<(), mlua::Error> {
         let dep = dep.output().expect("Failed to set packages to be dependencies!");
         let output = output.output().expect("Failed to remove packages!");
     
-        println!("Test: {:?}", String::from_utf8_lossy(&output.stdout));
-
         if output.status.success() {
             println!("Removed {:?}...", packages);
         } else {
