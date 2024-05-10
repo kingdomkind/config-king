@@ -7,7 +7,7 @@ fn main() -> Result<(), mlua::Error> {
     // Read the Lua file -- relative diretory should be ran from project base for testing (ie. in the main folder)
     let lua_script: String = fs::read_to_string(env::current_dir()
     .expect("Unable to get current directory").to_str()
-    .expect("Unable to convert current directory to str").to_string() + "/src/config.lua")?;
+    .expect("Unable to convert current directory to str").to_string() + "/config.lua")?;
 
     // Load the Lua script
     let globals = lua.globals();
