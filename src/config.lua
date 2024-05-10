@@ -15,7 +15,8 @@ Packages = {
 
     Aur = {
         {GlobalInstallLocation = "/home/pika/.aur/"},
-        "downgrade"
+        "downgrade",
+        "hyprland"
     },
 
     Flatpak = {
