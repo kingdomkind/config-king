@@ -100,7 +100,7 @@ fn main() -> Result<(), mlua::Error> {
                     
                     if index == "GlobalInstallLocation" {
                         global_install_location = value.to_str()?;
-                        println!("{}", global_install_location);
+                        println!("Test {}", global_install_location);
                     }
                 }
             },
