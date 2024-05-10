@@ -74,6 +74,7 @@ fn main() -> Result<(), mlua::Error> {
     }
 
     // Check if there are any packages to uninstall
+    println!("{}", packages.len());
     for value in &packages {
         println!("{}", value);
     }
