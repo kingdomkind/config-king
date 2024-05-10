@@ -150,7 +150,7 @@ fn main() -> Result<(), mlua::Error> {
                     }
 
                     let mut og_directory = String::from_utf8(current_dir.stdout).unwrap();
-                    og_directory.truncate(og_directory.len() - 2);
+                    og_directory.truncate(og_directory.len() - 1);
                     println!("{:?}", og_directory);
                     env::set_current_dir(og_directory)?;
                 }
