@@ -151,7 +151,7 @@ fn main() -> Result<(), mlua::Error> {
                         println!("{:?}", String::from_utf8_lossy(&output.stderr));
                     }
 
-                    env::set_current_dir(String::from_utf8(current_dir.stdout).unwrap())?;
+                    //env::set_current_dir(String::from_utf8(current_dir.stdout).unwrap())?;
                 }
             },
 
