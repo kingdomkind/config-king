@@ -149,9 +149,10 @@ fn main() -> Result<(), mlua::Error> {
                         println!("{:?}", String::from_utf8_lossy(&output.stderr));
                     }
 
-                    let var = String::from_utf8(current_dir.stdout).unwrap();
-                    println!("{:?}", var);
-                    env::set_current_dir(var)?;
+                    let mut og_directory = String::from_utf8(current_dir.stdout).unwrap();
+                    og_directory.truncate(og_directory.len() - 2);
+                    println!("{:?}", og_directory);
+                    env::set_current_dir(og_directory)?;
                 }
             },
 
