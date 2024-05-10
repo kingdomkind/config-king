@@ -123,7 +123,7 @@ fn main() -> Result<(), mlua::Error> {
                     }
 
                     println!("Attempting to install (AUR) {}...", string_str);
-                    let directory = global_install_location + "/" + string_str;
+                    let directory = global_install_location.clone() + "/" + string_str;
                     println!("Creating Directory at: {:?}", directory);
                     fs::create_dir_all::<&str>(directory.as_ref())?;
 
