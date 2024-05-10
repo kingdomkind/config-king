@@ -37,12 +37,6 @@ fn main() -> Result<(), mlua::Error> {
     let raw_packages = String::from_utf8(output.stdout).unwrap();
     let mut packages : Vec<&str> = raw_packages.lines().collect();
 
-    /*
-    println!("{}", packages.len());
-    for value in &packages {
-        println!("{}", value);
-    } */
-
     let packages_table: mlua::Table = globals.get("Packages")?;
     let official_table: mlua::Table = packages_table.get("Official")?;
     let aur_table: mlua::Table = packages_table.get("Aur")?;
@@ -123,19 +117,31 @@ fn main() -> Result<(), mlua::Error> {
                     }
 
                     println!("Attempting to install (AUR) {}...", string_str);
-                    let directory = global_install_location.clone() + "/" + string_str;
+                    let directory = global_install_location.clone() + "/" + string_str; // Can lead to double slash instances but doesn't seem to do anything
                     println!("Creating Directory at: {:?}", directory);
                     fs::create_dir_all::<&str>(directory.as_ref())?;
 
                     let output = Command::new("git")
                     .arg("clone")
                     .arg("https://aur.archlinux.org/".to_owned() + string_str + ".git")
-                    .arg(directory)
+                    .arg::<&str>(directory.as_ref())
                     .output()
                     .expect("Failed to execute command");
                 
                     if output.status.success() {
                         println!("Cloned (AUR) {}...", string_str);
+                    } else {
+                        println!("{:?}", String::from_utf8_lossy(&output.stderr));
+                    }
+
+                    let output = Command::new("makepkg")
+                    .arg("-si")
+                    .arg::<&str>(&("-p ".to_owned() + directory.as_ref()))
+                    .output()
+                    .expect("Failed to execute command");
+                
+                    if output.status.success() {
+                        println!("Installed (AUR) {}...", string_str);
                     } else {
                         println!("{:?}", String::from_utf8_lossy(&output.stderr));
                     }
@@ -146,13 +152,6 @@ fn main() -> Result<(), mlua::Error> {
             _ => (),
         }
     }
-
-    /*
-    // Check if there are any packages to uninstall
-    println!("{}", packages.len());
-    for value in &packages {
-        println!("{}", value);
-    } */
 
     if packages.len() > 0 {
         let mut output = Command::new("pacman");
