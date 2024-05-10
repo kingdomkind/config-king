@@ -134,11 +134,10 @@ fn main() -> Result<(), mlua::Error> {
                     let index = packages.iter().position(|&r| r == string_str);
                     let directory = global_install_location.clone() + "/" + string_str; // Can lead to double slash instances but doesn't seem to do anything
                     
-                    /*
-                    TODO: CHECK IF THE DIRECTORY STILL EXISTS. THE USER MAY HAVE CHANGED THE BLOBAL INSTALL LOCATION, AND SO THE RELEVANT NEW DIRECTORIES
-                    NEED TO BE CREATED IF SO!!
-                     */
-
+                    // Incase the install directory has changed or the folder was manually deleted
+                    if !std::path::Path::new(&directory).exists() {
+                        std::fs::create_dir(&directory)?;
+                    }
 
                     let og_directory = get_current_directory();
                     env::set_current_dir(directory)?;

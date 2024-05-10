@@ -12,7 +12,8 @@ Packages = {
         "rustup",
         "neofetch",
         "konsole",
-        "ttf-jetbrains-mono-nerd"
+        "ttf-jetbrains-mono-nerd",
+        "flatpak"
     },
 
     Aur = {
