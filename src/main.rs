@@ -13,17 +13,17 @@ fn main() -> Result<(), mlua::Error> {
     let globals = lua.globals();
     lua.load(&lua_script).exec()?;
 
-    // Get currently installed packages
-    let output = Command::new("pacman")
-    .arg("-Qeq")
-    .output()
-    .expect("Failed to execute command");
-
     // Upgrade System
     Command::new("pacman")
     .arg("-Syu")
     .output()
     .expect("Failed to exec command");
+
+    // Get currently installed packages
+    let output = Command::new("pacman")
+    .arg("-Qeq")
+    .output()
+    .expect("Failed to execute command");
 
     if !output.status.success() {
         println!("Command executed with failing error code");
@@ -53,6 +53,7 @@ fn main() -> Result<(), mlua::Error> {
                 if packages.contains(&string_str) {
                     let index = packages.iter().position(|&r| r == string_str);
                     packages.remove(index.unwrap());
+                    println!("Removing {}", string_str);
                     // println!("Already Installed {}...", string_str);
                 } else {
                     println!("Attempting to install {}...", string_str);
