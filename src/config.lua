@@ -1,5 +1,5 @@
 Packages = {
-    Default = {
+    Official = {
         "nano",
         "base",
         "base-devel",
@@ -14,7 +14,8 @@ Packages = {
     },
 
     Aur = {
-
+        {GlobalInstallLocation = "/home/pika/.aur/"},
+        
     },
 
     Flatpak = {

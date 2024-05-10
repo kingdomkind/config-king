@@ -1,6 +1,10 @@
 use mlua::prelude::*;
 use std::{env, fs, process::{Command, Output}};
 
+fn logger(to_print: &'static str, log_level: &'static str) {
+    let array = ["juan"];
+}
+
 fn main() -> Result<(), mlua::Error> {
     let lua = Lua::new();
 
@@ -37,15 +41,16 @@ fn main() -> Result<(), mlua::Error> {
         println!("{}", value);
     }
 
-    // Get the 'config' table and iterate over its values
     let packages_table: mlua::Table = globals.get("Packages")?;
-    let default_table: mlua::Table = packages_table.get("Default")?;
+    let official_table: mlua::Table = packages_table.get("Official")?;
+    let aur_table: mlua::Table = packages_table.get("Aur")?;
 
-    for pair in default_table.pairs::<mlua::Value, mlua::Value>() {
+    // Iterate over the config table
+    for pair in official_table.pairs::<mlua::Value, mlua::Value>() {
         let (_key, value) = pair?;
         match value {
 
-            // Seeing if the value is of type STRING
+            // STRING
             mlua::Value::String(string) => {
 
                 let string_str = string.to_str().unwrap();
@@ -76,6 +81,23 @@ fn main() -> Result<(), mlua::Error> {
             // Catch all function
             _ => (),
 
+        }
+    }
+
+    for pair in aur_table.pairs::<mlua::Value, mlua::Value>() {
+        let (key, value) = pair?;
+        match value {
+
+            // TABLE
+            mlua::Value::Table(table) => {
+                for pair in table.pairs::<mlua::Value, mlua::Value>() {
+                    let (_index, value) = pair?;
+                    println!("{:?} = {:?}", key, value);
+                }
+            },
+
+            // Catch all function
+            _ => (),
         }
     }
 
