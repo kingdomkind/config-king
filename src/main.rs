@@ -19,7 +19,8 @@ fn main() -> Result<(), mlua::Error> {
     lua.load(&lua_script).exec()?;
 
     // Upgrade System
-    Command::new("pacman")
+    Command::new("sudo")
+    .arg("pacman")
     .arg("-Syu")
     .output()
     .expect("Failed to exec command");
@@ -137,7 +138,7 @@ fn main() -> Result<(), mlua::Error> {
 
                     let output = Command::new("makepkg")
                     .arg("-si")
-                    .arg::<&str>(&("-p ".to_owned() + directory.as_ref()))
+                    .arg::<&str>(&("-p ".to_owned() + directory.as_ref() + "/"))
                     .output()
                     .expect("Failed to execute command");
                 
