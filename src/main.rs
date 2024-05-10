@@ -111,8 +111,6 @@ fn main() -> Result<(), mlua::Error> {
                     packages.remove(index.unwrap());
                 } else {
 
-                    //let this_install_location = global_install_location.clone();
-
                     if global_install_location.is_empty() {
                         println!("Unable to install (AUR) {} as the install location was not specified. (Try specifying GlobalInstallLocation?)", string_str);
                         break;
@@ -137,7 +135,9 @@ fn main() -> Result<(), mlua::Error> {
                     }
 
                     let current_dir = Command::new("pwd").output().expect("e");
+                    println!("{}", directory);
                     env::set_current_dir(directory)?;
+
                     let output = Command::new("makepkg")
                     .arg("-si")
                     .arg("--noconfirm")
