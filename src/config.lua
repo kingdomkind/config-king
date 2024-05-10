@@ -11,12 +11,12 @@ Packages = {
         "openssh",
         "rustup",
         "neofetch",
-        "kitty"
+        "konsole"
     },
 
     Aur = {
         {GlobalInstallLocation = "/home/pika/.aur/"},
-        "downgrade",
+        --"downgrade",
         "hyprland-git"
     },
 
