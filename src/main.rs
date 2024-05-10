@@ -123,11 +123,14 @@ fn main() -> Result<(), mlua::Error> {
                     }
 
                     println!("Attempting to install (AUR) {}...", string_str);
+                    let directory = global_install_location + "/" + string_str;
+                    println!("Creating Directory at: {:?}", directory);
+                    fs::create_dir_all::<&str>(directory.as_ref())?;
 
                     let output = Command::new("git")
                     .arg("clone")
                     .arg("https://aur.archlinux.org/".to_owned() + string_str + ".git")
-                    .arg::<&str>(global_install_location.as_ref())
+                    .arg(directory)
                     .output()
                     .expect("Failed to execute command");
                 
