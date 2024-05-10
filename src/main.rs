@@ -106,11 +106,32 @@ fn main() -> Result<(), mlua::Error> {
                 let string_str = string.to_str().unwrap();
 
                 if packages.contains(&string_str) {
+
+                    // Package is already installed - check for updates
                     let index = packages.iter().position(|&r| r == string_str);
+                    let directory = global_install_location.clone() + "/" + string_str; // Can lead to double slash instances but doesn't seem to do anything
+                    env::set_current_dir(directory)?;
+
+                    let output = Command::new("git")
+                    .arg("pull")
+                    .output()
+                    .expect("Failed to execute command");
+                
+                    if output.status.success() {
+                        println!("Pulled (AUR) {}...", string_str);
+                    } else {
+                        println!("{:?}", String::from_utf8_lossy(&output.stderr));
+                    }
+
+                    println!("{}", String::from_utf8_lossy(&output.stdout));
+                    if (String::from_utf8_lossy(&output.stdout) == "Already up to date.") {
+
+                    }
 
                     packages.remove(index.unwrap());
                 } else {
 
+                    // Package isn't installed, need to set it up and install it
                     if global_install_location.is_empty() {
                         println!("Unable to install (AUR) {} as the install location was not specified. (Try specifying GlobalInstallLocation?)", string_str);
                         break;
