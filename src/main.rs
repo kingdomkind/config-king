@@ -126,8 +126,8 @@ fn main() -> Result<(), mlua::Error> {
 
                     let output = Command::new("git")
                     .arg("clone")
-                    .arg("https://aur.archlinux.org/packages/".to_owned() + string_str)
-                    //.arg::<&str>(global_install_location.as_ref())
+                    .arg("https://aur.archlinux.org/packages/".to_owned() + string_str + ".git")
+                    .arg::<&str>(global_install_location.as_ref())
                     .output()
                     .expect("Failed to execute command");
                 
