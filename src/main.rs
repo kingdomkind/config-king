@@ -35,7 +35,7 @@ fn main() -> Result<(), mlua::Error> {
         println!("Command executed with failing error code");
     }
 
-    let raw_packages = String::from_utf8(output.stdout).unwrap();
+    let raw_packages: String = String::from_utf8(output.stdout).unwrap();
     let mut packages : Vec<&str> = raw_packages.lines().collect();
 
     let packages_table: mlua::Table = globals.get("Packages")?;
@@ -136,12 +136,11 @@ fn main() -> Result<(), mlua::Error> {
                         println!("{:?}", String::from_utf8_lossy(&output.stderr));
                     }
 
-                    let output = Command::new("cd")
-                    .arg::<&str>(directory.as_ref())
-                    //.arg("&&")
-                    //.arg("makepkg")
-                    //.arg("-si")
-                    //.arg("--noconfirm")
+                    let current_dir = Command::new("pwd").output().expect("e");
+                    env::set_current_dir(directory)?;
+                    let output = Command::new("makepkg")
+                    .arg("-si")
+                    .arg("--noconfirm")
                     .output()
                     .expect("Failed to execute command");
                 
@@ -150,6 +149,8 @@ fn main() -> Result<(), mlua::Error> {
                     } else {
                         println!("{:?}", String::from_utf8_lossy(&output.stderr));
                     }
+
+                    env::set_current_dir(String::from_utf8(current_dir.stdout).unwrap())?;
                 }
             },
 
