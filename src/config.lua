@@ -11,7 +11,8 @@ Packages = {
         "openssh",
         "rustup",
         "neofetch",
-        "konsole"
+        "konsole",
+        "tff-jetbrains-mono-nerd"
     },
 
     Aur = {
