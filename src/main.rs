@@ -134,9 +134,7 @@ fn main() -> Result<(), mlua::Error> {
                         println!("{:?}", String::from_utf8_lossy(&output.stderr));
                     }
 
-                    println!("Say sike rn");
-                    //let current_dir = Command::new("pwd").output().expect("e");
-                    println!("{}", directory);
+                    let current_dir = Command::new("pwd").output().expect("e");
                     env::set_current_dir(directory)?;
 
                     let output = Command::new("makepkg")
@@ -151,7 +149,7 @@ fn main() -> Result<(), mlua::Error> {
                         println!("{:?}", String::from_utf8_lossy(&output.stderr));
                     }
 
-                    //env::set_current_dir(String::from_utf8(current_dir.stdout).unwrap())?;
+                    env::set_current_dir(String::from_utf8(current_dir.stdout).unwrap())?;
                 }
             },
 
