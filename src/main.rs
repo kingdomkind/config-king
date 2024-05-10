@@ -148,7 +148,7 @@ fn main() -> Result<(), mlua::Error> {
                         println!("{:?}", String::from_utf8_lossy(&output.stderr));
                     }
 
-                    println!("{}", String::from_utf8_lossy(&output.stdout));
+                    println!("{:?}", &output.stdout);
                     
                     // Checking if already updated, if not, then build and continue
                     if String::from_utf8_lossy(&output.stdout) != "Already up to date." {
