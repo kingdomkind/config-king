@@ -91,9 +91,11 @@ fn main() -> Result<(), mlua::Error> {
 
             // TABLE
             mlua::Value::Table(table) => {
-                for pair in table.pairs::<mlua::Value, mlua::Value>() {
-                    let (index, value) = pair?; // index gives the var name, value gives the val
-                    println!("{:?}, {:?}", index, value);
+                for inner_pair in table.pairs::<String, String>() {
+                    if let Ok((inner_key, inner_value)) = inner_pair {
+                        println!("Key: {}", inner_key);
+                        println!("Value: {}", inner_value);
+                    }
                 }
             },
 
