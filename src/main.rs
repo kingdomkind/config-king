@@ -32,6 +32,11 @@ fn main() -> Result<(), mlua::Error> {
     let raw_packages = String::from_utf8(output.stdout).unwrap();
     let mut packages : Vec<&str> = raw_packages.lines().collect();
 
+    println!("{}", packages.len());
+    for value in &packages {
+        println!("{}", value);
+    }
+
     // Get the 'config' table and iterate over its values
     let packages_table: mlua::Table = globals.get("Packages")?;
     let default_table: mlua::Table = packages_table.get("Default")?;
