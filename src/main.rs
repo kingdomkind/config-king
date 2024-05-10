@@ -91,7 +91,7 @@ fn main() -> Result<(), mlua::Error> {
         let dep = dep.output().expect("Failed to set packages to be dependencies!");
         let output = output.output().expect("Failed to remove packages!");
     
-        println!("{:?}", String::from_utf8_lossy(&output.stdout));
+        println!("Test: {:?}", String::from_utf8_lossy(&output.stdout));
 
         if output.status.success() {
             println!("Removed {:?}...", packages);
