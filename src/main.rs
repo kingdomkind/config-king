@@ -1,5 +1,5 @@
 use mlua::prelude::*;
-use std::{env, fs, process::Command};
+use std::{env, fs, process::{Command, Output}};
 
 fn main() -> Result<(), mlua::Error> {
     let lua = Lua::new();
@@ -19,6 +19,7 @@ fn main() -> Result<(), mlua::Error> {
     .output()
     .expect("Failed to execute command");
 
+    // Upgrade System
     Command::new("pacman")
     .arg("-Syu")
     .output()
@@ -31,7 +32,7 @@ fn main() -> Result<(), mlua::Error> {
     let raw_packages = String::from_utf8(output.stdout).unwrap();
     let mut packages : Vec<&str> = raw_packages.lines().collect();
 
-    // Get the 'config' table and iterate over it's values
+    // Get the 'config' table and iterate over its values
     let packages_table: mlua::Table = globals.get("Packages")?;
     let default_table: mlua::Table = packages_table.get("Default")?;
 
@@ -72,7 +73,7 @@ fn main() -> Result<(), mlua::Error> {
         }
     }
 
-
+    // Check if there are any packages to uninstall
     if packages.len() > 0 {
         let mut output = Command::new("pacman");
         output.arg("--noconfirm");
@@ -90,6 +91,8 @@ fn main() -> Result<(), mlua::Error> {
         let dep = dep.output().expect("Failed to set packages to be dependencies!");
         let output = output.output().expect("Failed to remove packages!");
     
+        println!("{:?}", String::from_utf8_lossy(&output.stdout));
+
         if output.status.success() {
             println!("Removed {:?}...", packages);
         } else {
