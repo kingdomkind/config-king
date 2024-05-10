@@ -58,7 +58,7 @@ fn main() -> Result<(), mlua::Error> {
                 } else {
                     println!("Attempting to install {}...", string_str);
 
-                    let output = Command::new("pacman")
+                    let output = Command::new("sudo pacman")
                     .arg("-S")
                     .arg(string_str)
                     .arg("--noconfirm")
