@@ -1,9 +1,10 @@
 use mlua::prelude::*;
 use std::{env, fs, process::{Command, Output}};
 
+/* 
 fn logger(to_print: &'static str, log_level: &'static str) {
     let array = ["juan"];
-}
+} */
 
 fn main() -> Result<(), mlua::Error> {
     let lua = Lua::new();
@@ -36,10 +37,11 @@ fn main() -> Result<(), mlua::Error> {
     let raw_packages = String::from_utf8(output.stdout).unwrap();
     let mut packages : Vec<&str> = raw_packages.lines().collect();
 
+    /*
     println!("{}", packages.len());
     for value in &packages {
         println!("{}", value);
-    }
+    } */
 
     let packages_table: mlua::Table = globals.get("Packages")?;
     let official_table: mlua::Table = packages_table.get("Official")?;
@@ -58,7 +60,6 @@ fn main() -> Result<(), mlua::Error> {
                 if packages.contains(&string_str) {
                     let index = packages.iter().position(|&r| r == string_str);
                     packages.remove(index.unwrap());
-                    println!("Removing {}", string_str);
                     // println!("Already Installed {}...", string_str);
                 } else {
                     println!("Attempting to install {}...", string_str);
@@ -101,11 +102,12 @@ fn main() -> Result<(), mlua::Error> {
         }
     }
 
+    /*
     // Check if there are any packages to uninstall
     println!("{}", packages.len());
     for value in &packages {
         println!("{}", value);
-    }
+    } */
 
     if packages.len() > 0 {
         let mut output = Command::new("pacman");
