@@ -16,7 +16,7 @@ Packages = {
     },
 
     Aur = {
-        {GlobalInstallLocation = "/home/pika/.aur/"},
+        {GlobalInstallLocation = "/home/pika/.config-king/aur/"},
         --"downgrade",
         "hyprland-git",
     },
