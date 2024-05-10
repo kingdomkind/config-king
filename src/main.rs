@@ -148,10 +148,11 @@ fn main() -> Result<(), mlua::Error> {
                         println!("{:?}", String::from_utf8_lossy(&output.stderr));
                     }
 
-                    println!("{:?}", &output.stdout);
+                    println!("{}", String::from_utf8_lossy(&output.stdout));
                     
                     // Checking if already updated, if not, then build and continue
                     if String::from_utf8_lossy(&output.stdout) != "Already up to date." {
+                        println!("Entered");
                         build_aur(string_str);
                     }
 
