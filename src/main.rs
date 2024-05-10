@@ -86,16 +86,18 @@ fn main() -> Result<(), mlua::Error> {
     }
 
     for pair in aur_table.pairs::<mlua::Value, mlua::Value>() {
-        let (key, value) = pair?;
-        match value {
+        let (key, val) = pair?;
+        match val {
 
             // TABLE
             mlua::Value::Table(table) => {
-                for inner_pair in table.pairs::<String, String>() {
-                    if let Ok((inner_key, inner_value)) = inner_pair {
-                        println!("Key: {}", inner_key);
-                        println!("Value: {}", inner_value);
+                for pair in table.pairs::<mlua::Value, mlua::Value>() {
+                    let (index, value) = pair?; // index gives the var name, value gives the val
+                    if let mlua::Value::String(key_string) = index {
+                        println!("{:?}, {:?}", key_string.to_str()?, value);
                     }
+
+                    //println!("{:?}, {:?}", index, value);
                 }
             },
 
