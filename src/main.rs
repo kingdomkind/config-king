@@ -139,6 +139,8 @@ fn main() -> Result<(), mlua::Error> {
                     let output = Command::new("cd")
                     .arg::<&str>(directory.as_ref())
                     .arg("&&")
+                    .arg("yes")
+                    .arg("|")
                     .arg("makepkg")
                     .arg("-si")
                     .output()
