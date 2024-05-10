@@ -95,7 +95,10 @@ fn main() -> Result<(), mlua::Error> {
                     let (index, value) = pair?; // index gives the var name, value gives the val
                     let index = index.as_string().unwrap();
                     let value = value.as_string().unwrap();
-                    println!("{:?}, {:?}", index, value);
+                    
+                    if index == "GlobalInstallLocation" {
+                        println!("Les go");
+                    }
                 }
             },
 
