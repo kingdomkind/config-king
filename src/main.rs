@@ -85,10 +85,12 @@ fn main() -> Result<(), mlua::Error> {
         }
     }
 
+    // Install Location
+    let mut global_install_location : &str;
+
     for pair in aur_table.pairs::<mlua::Value, mlua::Value>() {
         let (_key, val) = pair?;
         match val {
-
             // TABLE
             mlua::Value::Table(table) => {
                 for pair in table.pairs::<mlua::Value, mlua::Value>() {
@@ -97,7 +99,8 @@ fn main() -> Result<(), mlua::Error> {
                     let value = value.as_string().unwrap();
                     
                     if index == "GlobalInstallLocation" {
-                        println!("Les go");
+                        global_install_location = value.to_str()?;
+                        println!("{}", global_install_location);
                     }
                 }
             },
