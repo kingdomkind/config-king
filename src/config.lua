@@ -11,6 +11,7 @@ Packages = {
         "openssh",
         "rustup",
         "neofetch",
+        "kitty"
     },
 
     Aur = {

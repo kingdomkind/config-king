@@ -137,6 +137,8 @@ fn main() -> Result<(), mlua::Error> {
                     let current_dir = Command::new("pwd").output().expect("e");
                     env::set_current_dir(directory)?;
 
+                    
+                    println!("Building (AUR) {}...", string_str);
                     let output = Command::new("makepkg")
                     .arg("-si")
                     .arg("--noconfirm")
