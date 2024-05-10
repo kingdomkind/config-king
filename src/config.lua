@@ -12,13 +12,13 @@ Packages = {
         "rustup",
         "neofetch",
         "konsole",
+        "ttf-jetbrains-mono-nerd"
     },
 
     Aur = {
         {GlobalInstallLocation = "/home/pika/.aur/"},
         --"downgrade",
         "hyprland-git",
-        "ttf-jetbrains-mono-nerd"
     },
 
     Flatpak = {
