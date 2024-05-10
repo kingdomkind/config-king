@@ -134,6 +134,7 @@ fn main() -> Result<(), mlua::Error> {
                         println!("{:?}", String::from_utf8_lossy(&output.stderr));
                     }
 
+                    println!("Say sike rn");
                     let current_dir = Command::new("pwd").output().expect("e");
                     println!("{}", directory);
                     env::set_current_dir(directory)?;
