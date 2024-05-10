@@ -6,6 +6,29 @@ fn logger(to_print: &'static str, log_level: &'static str) {
     let array = ["juan"];
 } */
 
+fn build_aur(name : &str) {
+    println!("Building (AUR) {}...", name);
+    let output = Command::new("makepkg")
+    .arg("-si")
+    .arg("--noconfirm")
+    .output()
+    .expect("Failed to execute command");
+
+    if output.status.success() {
+        println!("Installed (AUR) {}...", name);
+    } else {
+        println!("{:?}", String::from_utf8_lossy(&output.stderr));
+    }
+}
+
+fn get_current_directory() -> String {
+    let current_dir = Command::new("pwd").output().expect("Couldn't get current directory");
+    let mut og_directory = String::from_utf8(current_dir.stdout).unwrap();
+    og_directory.truncate(og_directory.len() - 1);
+    //println!("{:?}", og_directory);
+    return  og_directory;
+}
+
 fn main() -> Result<(), mlua::Error> {
     let lua = Lua::new();
 
@@ -110,6 +133,8 @@ fn main() -> Result<(), mlua::Error> {
                     // Package is already installed - check for updates
                     let index = packages.iter().position(|&r| r == string_str);
                     let directory = global_install_location.clone() + "/" + string_str; // Can lead to double slash instances but doesn't seem to do anything
+                    
+                    let og_directory = get_current_directory();
                     env::set_current_dir(directory)?;
 
                     let output = Command::new("git")
@@ -124,11 +149,15 @@ fn main() -> Result<(), mlua::Error> {
                     }
 
                     println!("{}", String::from_utf8_lossy(&output.stdout));
-                    if (String::from_utf8_lossy(&output.stdout) == "Already up to date.") {
-
+                    
+                    // Checking if already updated, if not, then build and continue
+                    if String::from_utf8_lossy(&output.stdout) != "Already up to date." {
+                        build_aur(string_str);
                     }
 
+                    env::set_current_dir(og_directory)?;
                     packages.remove(index.unwrap());
+                    
                 } else {
 
                     // Package isn't installed, need to set it up and install it
@@ -155,26 +184,9 @@ fn main() -> Result<(), mlua::Error> {
                         println!("{:?}", String::from_utf8_lossy(&output.stderr));
                     }
 
-                    let current_dir = Command::new("pwd").output().expect("e");
+                    let og_directory = get_current_directory();
                     env::set_current_dir(directory)?;
-
-                    
-                    println!("Building (AUR) {}...", string_str);
-                    let output = Command::new("makepkg")
-                    .arg("-si")
-                    .arg("--noconfirm")
-                    .output()
-                    .expect("Failed to execute command");
-                
-                    if output.status.success() {
-                        println!("Installed (AUR) {}...", string_str);
-                    } else {
-                        println!("{:?}", String::from_utf8_lossy(&output.stderr));
-                    }
-
-                    let mut og_directory = String::from_utf8(current_dir.stdout).unwrap();
-                    og_directory.truncate(og_directory.len() - 1);
-                    println!("{:?}", og_directory);
+                    build_aur(string_str);
                     env::set_current_dir(og_directory)?;
                 }
             },
