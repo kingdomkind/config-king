@@ -138,7 +138,8 @@ fn main() -> Result<(), mlua::Error> {
 
                     let output = Command::new("makepkg")
                     .arg("-si")
-                    .arg::<&str>(&("-p ".to_owned() + directory.as_ref() + "/"))
+                    //.arg::<&str>(&("-p ".to_owned() + directory.as_ref() + "/"))
+                    .arg("-p /home/pika/.aur/downgrade/")
                     .output()
                     .expect("Failed to execute command");
                 
