@@ -74,6 +74,10 @@ fn main() -> Result<(), mlua::Error> {
     }
 
     // Check if there are any packages to uninstall
+    for value in &packages {
+        println!("{}", value);
+    }
+
     if packages.len() > 0 {
         let mut output = Command::new("pacman");
         output.arg("--noconfirm");
