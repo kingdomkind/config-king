@@ -1,5 +1,5 @@
 use mlua::prelude::*;
-use std::{env, fs, process::{Command, Output}};
+use std::{env, fs, process::{Command, Output}, ptr::null};
 
 /* 
 fn logger(to_print: &'static str, log_level: &'static str) {
@@ -86,7 +86,7 @@ fn main() -> Result<(), mlua::Error> {
     }
 
     // Install Location
-    let mut global_install_location : &str;
+    let mut global_install_location : String = String::new();
 
     for pair in aur_table.pairs::<mlua::Value, mlua::Value>() {
         let (_key, val) = pair?;
@@ -99,8 +99,42 @@ fn main() -> Result<(), mlua::Error> {
                     let value = value.as_string().unwrap();
                     
                     if index == "GlobalInstallLocation" {
-                        global_install_location = value.to_str()?;
-                        println!("Test {}", global_install_location);
+                        global_install_location = value.to_str()?.to_string();
+                    }
+                }
+            },
+
+            // STRING
+            mlua::Value::String(string) => {
+
+                let string_str = string.to_str().unwrap();
+
+                if packages.contains(&string_str) {
+                    let index = packages.iter().position(|&r| r == string_str);
+
+                    packages.remove(index.unwrap());
+                } else {
+
+                    //let this_install_location = global_install_location.clone();
+
+                    if global_install_location.is_empty() {
+                        println!("Unable to install (AUR) {} as the install location was not specified. (Try specifying GlobalInstallLocation?)", string_str);
+                        break;
+                    }
+
+                    println!("Attempting to install (AUR) {}...", string_str);
+
+                    let output = Command::new("git")
+                    .arg("clone")
+                    .arg("https://aur.archlinux.org/packages/".to_owned() + string_str)
+                    .arg::<&str>(global_install_location.as_ref())
+                    .output()
+                    .expect("Failed to execute command");
+                
+                    if output.status.success() {
+                        println!("Cloned (AUR) {}...", string_str);
+                    } else {
+                        println!("{:?}", String::from_utf8_lossy(&output.stderr));
                     }
                 }
             },
