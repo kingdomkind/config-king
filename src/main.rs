@@ -136,11 +136,11 @@ fn main() -> Result<(), mlua::Error> {
                         println!("{:?}", String::from_utf8_lossy(&output.stderr));
                     }
 
-                    let output = Command::new("makepkg")
+                    let output = Command::new("cd")
+                    .arg::<&str>(directory.as_ref())
+                    .arg("&&")
+                    .arg("makepkg")
                     .arg("-si")
-                    //.arg::<&str>(&("-p ".to_owned() + directory.as_ref() + "/"))
-                    .arg("-p")
-                    .arg("/home/pika/.aur/downgrade/")
                     .output()
                     .expect("Failed to execute command");
                 
