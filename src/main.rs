@@ -1,19 +1,20 @@
 use mlua::prelude::*;
 use std::{env, fs, process::{Command, Output}, };
 
-const see_text : bool = false;
-const assume_yes : bool = true;
-
-/* 
-fn logger(to_print: &'static str, log_level: &'static str) {
-    let array = ["juan"];
-} */
+const SEE_STDOUT : bool = false;
+const SEE_STDERR : bool = false;
+const ASSUME_YES : bool = true;
 
 fn send_output(mut output : Command) -> bool{
 
-    if !see_text {
+    if !SEE_STDOUT {
         output.stdout(std::process::Stdio::null());
     }
+
+    if !SEE_STDERR {
+        output.stderr(std::process::Stdio::null());
+    }
+
 
     let mut spawned = output.spawn().expect("Unable to output command");
     let wait = spawned.wait().expect("Failed to wait for output to end");
@@ -25,7 +26,7 @@ fn build_aur(name : &str) {
 
     let mut output = Command::new("makepkg");
     output.arg("-si");
-    if assume_yes { output.arg("--noconfirm"); }
+    if ASSUME_YES { output.arg("--noconfirm"); }
 
     let ret_val = send_output(output);
     if ret_val {
