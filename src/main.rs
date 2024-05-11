@@ -6,25 +6,13 @@ fn logger(to_print: &'static str, log_level: &'static str) {
     let array = ["juan"];
 } */
 
-fn send_output(mut output : Command) -> bool {
+fn send_output(mut output : Command) -> bool{
     let mut spawned = output.spawn().expect("Unable to output command");
+    //let reader = BufReader::new(spawned.stdout.as_mut().expect("Failed to capture stdout"));
 
-    /*
-    if let Some(ref mut stdout) = spawned.stdout {
-        let reader = BufReader::new(stdout);
-
-        //for line in reader.lines() {
-        //    println!("{}", line.expect("Failed to read line"));
-       // }
-    } else {
-        println!("No stdout available");
-    }
-    */
-    
     let wait = spawned.wait().expect("Failed to wait for output to end");
-    return wait.success();
+    return  wait.success();
 }
-
 
 fn build_aur(name : &str) {
     println!("Building (AUR) {}...", name);
