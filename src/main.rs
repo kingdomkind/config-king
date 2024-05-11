@@ -8,17 +8,18 @@ fn logger(to_print: &'static str, log_level: &'static str) {
 
 fn send_output(mut output : Command) -> bool{
     let mut spawned = output.spawn().expect("Unable to output command");
-    let reader = BufReader::new(spawned.stdout.as_mut().expect("Failed to capture stdout"));
+    //let reader = BufReader::new(spawned.stdout.as_mut().expect("Failed to capture stdout"));
 
     println!("before");
-    for line in reader.lines() {
-        println!("{}", line.expect("Failed to read line"));
-    }
+    //for line in reader.lines() {
+     //   println!("{}", line.expect("Failed to read line"));
+    //}
 
     println!("We gone awit");
-    let wait = spawned.wait().expect("Failed to wait for output to end");
+    //let wait = spawned.wait().expect("Failed to wait for output to end");
     println!("Wait fin.");
-    return wait.success();
+    //return wait.success();
+    true
 }
 
 fn build_aur(name : &str) {
