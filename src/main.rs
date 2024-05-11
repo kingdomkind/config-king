@@ -10,7 +10,7 @@ fn send_output(mut output : Command) -> bool{
     output.stdout(std::process::Stdio::null());
     let mut spawned = output.spawn().expect("Unable to output command");
     let wait = spawned.wait().expect("Failed to wait for output to end");
-    return  wait.success();
+    return wait.success();
 }
 
 fn build_aur(name : &str) {
@@ -32,7 +32,6 @@ fn get_current_directory() -> String {
     let current_dir = Command::new("pwd").output().expect("Couldn't get current directory");
     let mut og_directory = String::from_utf8(current_dir.stdout).unwrap();
     og_directory.truncate(og_directory.len() - 1);
-    //println!("{:?}", og_directory);
     return  og_directory;
 }
 
@@ -274,7 +273,7 @@ fn main() -> Result<(), mlua::Error> {
     if packages.len() > 0 {
         let mut output = Command::new("sudo");
         output.arg("pacman");
-        output.arg("--noconfirm");
+        //output.arg("--noconfirm");
         output.arg("-Rns");
     
         let mut dep = Command::new("sudo");
@@ -289,16 +288,13 @@ fn main() -> Result<(), mlua::Error> {
     
         let dep = dep.output().expect("Failed to set packages to be dependencies!");
 
-        let ret : bool = send_output(output);
-        println!("{}", ret);
-        /* 
-        let output: Output = output.output().expect("Failed to remove packages!");
+        let ret_val : bool = send_output(output);
     
-        if output.status.success() {
+        if ret_val {
             println!("Removed {:?}...", packages);
         } else {
-            println!("pacman -Rns failed with: Stdout: {:?}, Stderr: {:?}", String::from_utf8_lossy(&output.stdout), String::from_utf8_lossy(&output.stderr));
-        } */
+            //println!("pacman -Rns failed with: Stdout: {:?}, Stderr: {:?}", String::from_utf8_lossy(&output.stdout), String::from_utf8_lossy(&output.stderr));
+        }
     
         if !dep.status.success() {
             println!("pacman -D failed with: Stdout: {:?}, Stderr: {:?}", String::from_utf8_lossy(&dep.stdout), String::from_utf8_lossy(&dep.stderr));
