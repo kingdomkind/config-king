@@ -14,12 +14,12 @@ Packages = {
         "konsole",
         "ttf-jetbrains-mono-nerd",
         "flatpak",
-        "hyprland",
     },
 
     Aur = {
         {GlobalInstallLocation = "/home/pika/.config-king/aur/"},
-        "downgrade"
+        "downgrade",
+        "hyprland-git"
     },
 
     Flatpak = {

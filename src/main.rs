@@ -389,8 +389,8 @@ fn main() -> Result<(), mlua::Error> {
     let aur_table: mlua::Table = packages_table.get("Aur")?;
     let flatpak_table: mlua::Table = packages_table.get("Flatpak")?;
 
+    let _res2 = remove_packages(packages.clone(), flatpak_packages.clone(), official_table.clone(), aur_table.clone(), flatpak_table.clone());
     let _res1 = install_packages(packages.clone(), flatpak_packages.clone(), official_table.clone(), aur_table.clone(), flatpak_table.clone());
-    let _res2 = remove_packages(packages.clone(), flatpak_packages.clone(), official_table, aur_table, flatpak_table);
     println!("Finished...");
     Ok(())
 }
