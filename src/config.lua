@@ -13,17 +13,16 @@ Packages = {
         "neofetch",
         "konsole",
         "ttf-jetbrains-mono-nerd",
-        "flatpak"
+        "flatpak",
+        "hyprland",
     },
 
     Aur = {
         {GlobalInstallLocation = "/home/pika/.config-king/aur/"},
-        --"downgrade",
-        "hyprland-git",
+        downgrade
     },
 
     Flatpak = {
-        --"org.gimp.GIMP",
-        --"org.kde.krita"
+        "org.gimp.GIMP",
     },
 }

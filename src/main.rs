@@ -323,7 +323,7 @@ fn main() -> Result<(), mlua::Error> {
         .expect("Failed to execute command");
     
         if !output.status.success() {
-            println!("Test {:?}", String::from_utf8_lossy(&output.stderr));
+            println!("Failed to uninstall unused runtimes: {:?}", String::from_utf8_lossy(&output.stderr));
         }
     }
 
