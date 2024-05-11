@@ -11,7 +11,6 @@ Packages = {
         "openssh",
         "rustup",
         "neofetch",
-        "konsole",
         "ttf-jetbrains-mono-nerd",
         "flatpak",
     },
