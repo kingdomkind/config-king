@@ -9,6 +9,7 @@ fn logger(to_print: &'static str, log_level: &'static str) {
 fn send_output(mut output : Command) -> bool {
     let mut spawned = output.spawn().expect("Unable to output command");
 
+    /*
     if let Some(ref mut stdout) = spawned.stdout {
         let reader = BufReader::new(stdout);
 
@@ -18,7 +19,8 @@ fn send_output(mut output : Command) -> bool {
     } else {
         println!("No stdout available");
     }
-
+    */
+    
     let wait = spawned.wait().expect("Failed to wait for output to end");
     return wait.success();
 }
