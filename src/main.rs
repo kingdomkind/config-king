@@ -219,8 +219,9 @@ fn main() -> Result<(), mlua::Error> {
 
     let flatpak_packages: String = String::from_utf8(flatpak_packages.stdout).unwrap();
     let mut flatpak_packages : Vec<&str> = flatpak_packages.lines().collect();
+    flatpak_packages.remove(0);
 
-    println!("{:?}", flatpak_packages);
+    println!("Flatpaks to install: {:?}", flatpak_packages);
 
     // Iterate over the config table
     for pair in flatpak_table.pairs::<mlua::Value, mlua::Value>() {
@@ -312,7 +313,7 @@ fn main() -> Result<(), mlua::Error> {
         if output.status.success() {
             println!("Removed {:?}...", flatpak_packages);
         } else {
-            println!("pacman -Rns failed with: Stdout: {:?}, Stderr: {:?}", String::from_utf8_lossy(&output.stdout), String::from_utf8_lossy(&output.stderr));
+            println!("flatpak uninstall failed: {:?}, Stderr: {:?}", String::from_utf8_lossy(&output.stdout), String::from_utf8_lossy(&output.stderr));
         }
     
         let output = Command::new("flatpak")
