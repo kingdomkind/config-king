@@ -222,8 +222,6 @@ fn main() -> Result<(), mlua::Error> {
     let mut flatpak_packages : Vec<&str> = flatpak_packages.lines().collect();
     flatpak_packages.remove(0);
 
-    //println!("Flatpaks to install: {:?}", flatpak_packages);
-
     // Iterate over the config table
     for pair in flatpak_table.pairs::<mlua::Value, mlua::Value>() {
         let (_key, value) = pair?;
@@ -324,7 +322,7 @@ fn main() -> Result<(), mlua::Error> {
         .expect("Failed to execute command");
     
         if !output.status.success() {
-            println!("{:?}", String::from_utf8_lossy(&output.stderr));
+            println!("Test {:?}", String::from_utf8_lossy(&output.stderr));
         }
     }
 
