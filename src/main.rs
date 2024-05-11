@@ -220,6 +220,8 @@ fn main() -> Result<(), mlua::Error> {
     let flatpak_packages: String = String::from_utf8(flatpak_packages.stdout).unwrap();
     let mut flatpak_packages : Vec<&str> = flatpak_packages.lines().collect();
 
+    println!("{:?}", flatpak_packages);
+
     // Iterate over the config table
     for pair in flatpak_table.pairs::<mlua::Value, mlua::Value>() {
         let (_key, value) = pair?;
