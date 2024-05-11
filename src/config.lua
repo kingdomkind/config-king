@@ -23,6 +23,8 @@ Packages = {
     },
 
     Flatpak = {
-        "org.gimp.GIMP"
+        "org.gimp.GIMP",
+        "org.kde.krita"
+
     },
 }

@@ -281,7 +281,7 @@ fn main() -> Result<(), mlua::Error> {
         }
     
         let dep = dep.output().expect("Failed to set packages to be dependencies!");
-        let output = output.output().expect("Failed to remove packages!");
+        let output: Output = output.output().expect("Failed to remove packages!");
     
         if output.status.success() {
             println!("Removed {:?}...", packages);
@@ -292,12 +292,36 @@ fn main() -> Result<(), mlua::Error> {
         if !dep.status.success() {
             println!("pacman -D failed with: Stdout: {:?}, Stderr: {:?}", String::from_utf8_lossy(&dep.stdout), String::from_utf8_lossy(&dep.stderr));
         }
-
-
-        /* REMOVE FLATPAK STUFF */
-
     
         Command::new("pacman").arg("-Syu").output().expect("Failed to update entire system...");
+    }
+
+    if flatpak_packages.len() > 0 {
+        let mut output = Command::new("flatpak");
+        output.arg("uninstall");
+        output.arg("--assumeyes");
+
+        for value in &flatpak_packages {
+            output.arg(value);
+        }
+
+        let output: Output = output.output().expect("Failed to remove packages!");
+
+        if output.status.success() {
+            println!("Removed {:?}...", flatpak_packages);
+        } else {
+            println!("pacman -Rns failed with: Stdout: {:?}, Stderr: {:?}", String::from_utf8_lossy(&output.stdout), String::from_utf8_lossy(&output.stderr));
+        }
+    
+        let output = Command::new("flatpak")
+        .arg("uninstall")
+        .arg("--unused")
+        .output()
+        .expect("Failed to execute command");
+    
+        if !output.status.success() {
+            println!("{:?}", String::from_utf8_lossy(&output.stderr));
+        }
     }
 
     println!("Finished...");
