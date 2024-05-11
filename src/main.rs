@@ -288,9 +288,9 @@ fn main() -> Result<(), mlua::Error> {
         let success : bool = send_output(output);
         if success {
             println!("Removed {:?}...", packages);
+        } else {
+            let success : bool = send_output(dep);
         }
-
-        let success : bool = send_output(dep);
     
         Command::new("pacman").arg("-Syu").output().expect("Failed to update entire system...");
     }
