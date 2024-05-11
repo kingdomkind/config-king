@@ -23,6 +23,6 @@ Packages = {
     },
 
     Flatpak = {
-
+        "org.gimp.GIMP"
     },
 }
