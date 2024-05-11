@@ -214,6 +214,7 @@ fn main() -> Result<(), mlua::Error> {
     let flatpak_packages = Command::new("flatpak")
     .arg("list")
     .arg("--app")
+    .arg("--columns=application")
     .output()
     .expect("Failed to execute command");
 
