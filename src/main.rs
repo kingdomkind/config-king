@@ -7,12 +7,10 @@ fn logger(to_print: &'static str, log_level: &'static str) {
 } */
 
 fn send_output(mut output : Command) -> bool{
+    output.stdout(std::process::Stdio::null());
     let mut spawned = output.spawn().expect("Unable to output command");
-    //let reader = BufReader::new(spawned.stdout.as_mut().expect("Failed to capture stdout"));
-
     let wait = spawned.wait().expect("Failed to wait for output to end");
     return  wait.success();
-    //true
 }
 
 fn build_aur(name : &str) {
