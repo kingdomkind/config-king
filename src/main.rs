@@ -10,6 +10,7 @@ fn send_output(mut output : Command) -> bool{
     let mut spawned = output.spawn().expect("Unable to output command");
     let reader = BufReader::new(spawned.stdout.as_mut().expect("Failed to capture stdout"));
 
+    println!("before");
     for line in reader.lines() {
         println!("{}", line.expect("Failed to read line"));
     }
@@ -297,7 +298,7 @@ fn main() -> Result<(), mlua::Error> {
         let dep = dep.output().expect("Failed to set packages to be dependencies!");
 
         let ret : bool = send_output(output);
-        println!("{}", ret);
+        println!("testy {}", ret);
         /* 
         let output: Output = output.output().expect("Failed to remove packages!");
     
