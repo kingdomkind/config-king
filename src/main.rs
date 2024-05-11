@@ -12,9 +12,9 @@ fn send_output(mut output : Command) -> bool {
     if let Some(ref mut stdout) = spawned.stdout {
         let reader = BufReader::new(stdout);
 
-        for line in reader.lines() {
-            println!("{}", line.expect("Failed to read line"));
-        }
+        //for line in reader.lines() {
+        //    println!("{}", line.expect("Failed to read line"));
+       // }
     } else {
         println!("No stdout available");
     }
