@@ -2,7 +2,7 @@ use mlua::prelude::*;
 use std::{env, fs, process::{Command, Output}, };
 
 const SEE_STDOUT : bool = false;
-const SEE_STDERR : bool = false;
+const SEE_STDERR : bool = true;
 const ASSUME_YES : bool = true;
 
 fn send_output(mut output : Command) -> bool{
