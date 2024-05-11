@@ -1,5 +1,8 @@
 use mlua::prelude::*;
-use std::{env, fs, io::{BufRead, BufReader}, process::{Command, Output}, };
+use std::{env, fs, process::{Command, Output}, };
+
+const see_text : bool = false;
+const assume_yes : bool = true;
 
 /* 
 fn logger(to_print: &'static str, log_level: &'static str) {
@@ -7,7 +10,11 @@ fn logger(to_print: &'static str, log_level: &'static str) {
 } */
 
 fn send_output(mut output : Command) -> bool{
-    //output.stdout(std::process::Stdio::null());
+
+    if !see_text {
+        output.stdout(std::process::Stdio::null());
+    }
+
     let mut spawned = output.spawn().expect("Unable to output command");
     let wait = spawned.wait().expect("Failed to wait for output to end");
     return wait.success();
@@ -15,16 +22,14 @@ fn send_output(mut output : Command) -> bool{
 
 fn build_aur(name : &str) {
     println!("Building (AUR) {}...", name);
-    let output = Command::new("makepkg")
-    .arg("-si")
-    .arg("--noconfirm")
-    .output()
-    .expect("Failed to execute command");
 
-    if output.status.success() {
+    let mut output = Command::new("makepkg");
+    output.arg("-si");
+    if assume_yes { output.arg("--noconfirm"); }
+
+    let ret_val = send_output(output);
+    if ret_val {
         println!("Installed (AUR) {}...", name);
-    } else {
-        println!("{:?}", String::from_utf8_lossy(&output.stderr));
     }
 }
 
