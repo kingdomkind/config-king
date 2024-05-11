@@ -8,15 +8,14 @@ fn logger(to_print: &'static str, log_level: &'static str) {
 
 fn send_output(mut output : Command) -> bool{
     let mut spawned = output.spawn().expect("Unable to output command");
-    let reader = BufReader::new(spawned.stdout.take().expect("Failed to capture stdout"));
+    let reader = BufReader::new(spawned.stdout.as_mut().expect("Failed to capture stdout"));
 
     for line in reader.lines() {
         println!("{}", line.expect("Failed to read line"));
     }
 
     let wait = spawned.wait().expect("Failed to wait for output to end");
-    return  wait.success();
-
+    return wait.success();
 }
 
 fn build_aur(name : &str) {
@@ -297,7 +296,6 @@ fn main() -> Result<(), mlua::Error> {
 
         let ret : bool = send_output(output);
         println!("{}", ret);
-        
         /* 
         let output: Output = output.output().expect("Failed to remove packages!");
     
