@@ -18,10 +18,10 @@ Packages = {
     Aur = {
         {GlobalInstallLocation = "/home/pika/.config-king/aur/"},
         "downgrade",
-        --"hyprland-git"
+        "hyprland-git"
     },
 
     Flatpak = {
-        --"org.gimp.GIMP",
+        "org.gimp.GIMP",
     },
 }
