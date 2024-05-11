@@ -12,6 +12,7 @@ fn send_output(mut output : Command) -> bool{
 
     let wait = spawned.wait().expect("Failed to wait for output to end");
     return  wait.success();
+    //true
 }
 
 fn build_aur(name : &str) {
