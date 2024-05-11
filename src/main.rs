@@ -7,7 +7,7 @@ fn logger(to_print: &'static str, log_level: &'static str) {
 } */
 
 fn send_output(mut output : Command) -> bool{
-    let mut spawned = output.spawn().expect("Unable to output command");
+    let mut spawned = output.output().expect("Unable to output command");
     //let reader = BufReader::new(spawned.stdout.as_mut().expect("Failed to capture stdout"));
 
     println!("before");
