@@ -14,7 +14,9 @@ fn send_output(mut output : Command) -> bool{
         println!("{}", line.expect("Failed to read line"));
     }
 
+    println!("We gone awit");
     let wait = spawned.wait().expect("Failed to wait for output to end");
+    println!("Wait fin.");
     return wait.success();
 }
 
