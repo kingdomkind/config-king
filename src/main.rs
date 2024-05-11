@@ -7,18 +7,15 @@ fn logger(to_print: &'static str, log_level: &'static str) {
 } */
 
 fn send_output(mut output : Command) -> bool{
-    let mut spawned = output.output().expect("Unable to output command");
-    //let reader = BufReader::new(spawned.stdout.as_mut().expect("Failed to capture stdout"));
+    let spawned = output.spawn().expect("Unable to output command");
+    let reader = BufReader::new(spawned.stdout.expect("Failed to capture stdout"));
 
-    println!("before");
-    //for line in reader.lines() {
-     //   println!("{}", line.expect("Failed to read line"));
-    //}
+    for line in reader.lines() {
+        println!("{}", line.expect("Failed to read line"));
+    }
 
-    println!("We gone awit");
     //let wait = spawned.wait().expect("Failed to wait for output to end");
-    println!("Wait fin.");
-    //return wait.success();
+    //return  wait.success();
     true
 }
 
@@ -299,7 +296,7 @@ fn main() -> Result<(), mlua::Error> {
         let dep = dep.output().expect("Failed to set packages to be dependencies!");
 
         let ret : bool = send_output(output);
-        println!("testy {}", ret);
+        println!("{}", ret);
         /* 
         let output: Output = output.output().expect("Failed to remove packages!");
     
