@@ -25,10 +25,52 @@ fn get_current_directory() -> String {
     let current_dir = Command::new("pwd").output().expect("Couldn't get current directory");
     let mut og_directory = String::from_utf8(current_dir.stdout).unwrap();
     og_directory.truncate(og_directory.len() - 1);
+    //println!("{:?}", og_directory);
     return  og_directory;
 }
 
-fn install_packages(mut packages : Vec<&str>, mut flatpak_packages : Vec<&str>, official_table : mlua::Table, aur_table : mlua::Table, flatpak_table : mlua::Table) -> Result<(), mlua::Error> {
+fn main() -> Result<(), mlua::Error> {
+    let lua = Lua::new();
+
+    // Read the Lua file -- relative diretory should be ran from project base for testing (ie. in the main folder)
+    let lua_script: String = fs::read_to_string(env::current_dir()
+    .expect("Unable to get current directory").to_str()
+    .expect("Unable to convert current directory to str").to_string() + "/config.lua")?;
+
+    // Load the Lua script
+    let globals = lua.globals();
+    lua.load(&lua_script).exec()?;
+
+    // Upgrade System
+    Command::new("sudo")
+    .arg("pacman")
+    .arg("-Syu")
+    .output()
+    .expect("Failed to exec command");
+
+    // Get currently installed packages
+    let output = Command::new("pacman")
+    .arg("-Qeq")
+    .output()
+    .expect("Failed to execute command");
+
+    if !output.status.success() {
+        println!("Command executed with failing error code");
+    }
+
+    let raw_packages: String = String::from_utf8(output.stdout).unwrap();
+    let mut packages : Vec<&str> = raw_packages.lines().collect();
+
+    let packages_table: mlua::Table = globals.get("Packages")?;
+    let official_table: mlua::Table = packages_table.get("Official")?;
+    let aur_table: mlua::Table = packages_table.get("Aur")?;
+    let flatpak_table: mlua::Table = packages_table.get("Flatpak")?;
+
+    /*
+    
+    INSTALLING PACKAGES
+
+     */
 
     // Iterate over the official table
     for pair in official_table.pairs::<mlua::Value, mlua::Value>() {
@@ -167,6 +209,19 @@ fn install_packages(mut packages : Vec<&str>, mut flatpak_packages : Vec<&str>, 
         }
     }
 
+
+    /* TODO, GET CURRENT FLATPAKS INSTALLED! */
+    let flatpak_packages = Command::new("flatpak")
+    .arg("list")
+    .arg("--app")
+    .arg("--columns=application")
+    .output()
+    .expect("Failed to execute command");
+
+    let flatpak_packages: String = String::from_utf8(flatpak_packages.stdout).unwrap();
+    let mut flatpak_packages : Vec<&str> = flatpak_packages.lines().collect();
+    flatpak_packages.remove(0);
+
     // Iterate over the config table
     for pair in flatpak_table.pairs::<mlua::Value, mlua::Value>() {
         let (_key, value) = pair?;
@@ -205,74 +260,11 @@ fn install_packages(mut packages : Vec<&str>, mut flatpak_packages : Vec<&str>, 
         }
     }
 
-    Ok(())
-}
-
-fn remove_packages(mut packages : Vec<&str>, mut flatpak_packages : Vec<&str>, official_table : mlua::Table, aur_table : mlua::Table, flatpak_table : mlua::Table) -> Result<(), mlua::Error> {
-
-    for pair in official_table.pairs::<mlua::Value, mlua::Value>() {
-        let (_key, value) = pair?;
-        match value {
-
-            // STRING
-            mlua::Value::String(string) => {
-
-                let string_str = string.to_str().unwrap();
-
-                if packages.contains(&string_str) {
-                    let index = packages.iter().position(|&r| r == string_str);
-                    packages.remove(index.unwrap());
-                }
-            },
-
-            // Catch all function
-            _ => (),
-
-        }
-    }
-
-    for pair in aur_table.pairs::<mlua::Value, mlua::Value>() {
-        let (_key, val) = pair?;
-        match val {
-
-            // STRING
-            mlua::Value::String(string) => {
-
-                let string_str = string.to_str().unwrap();
-
-                if packages.contains(&string_str) {
-                    let index = packages.iter().position(|&r| r == string_str);
-                    packages.remove(index.unwrap());
-                }
-            }
-
-            // Catch all function
-            _ => (),
-        }
-    }
-
-    // Iterate over the config table
-    for pair in flatpak_table.pairs::<mlua::Value, mlua::Value>() {
-        let (_key, value) = pair?;
-        match value {
-
-            // STRING
-            mlua::Value::String(string) => {
-
-                let string_str = string.to_str().unwrap();
-
-                if flatpak_packages.contains(&string_str) {
-                    let index = flatpak_packages.iter().position(|&r| r == string_str);
-                    flatpak_packages.remove(index.unwrap());
-                }
-            },
-
-            // Catch all function
-            _ => (),
-
-        }
-    }
-
+    /*
+    
+    REMOVING PACKAGES
+    
+     */
 
     if packages.len() > 0 {
         let mut output = Command::new("sudo");
@@ -335,62 +327,6 @@ fn remove_packages(mut packages : Vec<&str>, mut flatpak_packages : Vec<&str>, o
         }
     }
 
-    Ok(())
-
-}
-
-fn main() -> Result<(), mlua::Error> {
-    let lua = Lua::new();
-
-    // Read the Lua file -- relative diretory should be ran from project base for testing (ie. in the main folder)
-    let lua_script: String = fs::read_to_string(env::current_dir()
-    .expect("Unable to get current directory").to_str()
-    .expect("Unable to convert current directory to str").to_string() + "/config.lua")?;
-
-    // Load the Lua script
-    let globals = lua.globals();
-    lua.load(&lua_script).exec()?;
-
-    // Upgrade System
-    Command::new("sudo")
-    .arg("pacman")
-    .arg("-Syu")
-    .output()
-    .expect("Failed to exec command");
-
-
-    /*
-    GET CURRENTLY INSTALLED APPLICATIONS & PACKAGE STATES
-     */
-
-    // Get currently installed flatpaks
-    let flatpak_packages = Command::new("flatpak")
-    .arg("list")
-    .arg("--app")
-    .arg("--columns=application")
-    .output()
-    .expect("Failed to execute command");
-    
-    let flatpak_packages: String = String::from_utf8(flatpak_packages.stdout).unwrap();
-    let mut flatpak_packages : Vec<&str> = flatpak_packages.lines().collect();
-    flatpak_packages.remove(0);
-
-    // Get currently installed packages
-    let output = Command::new("pacman")
-    .arg("-Qeq")
-    .output()
-    .expect("Failed to execute command");
-
-    let raw_packages: String = String::from_utf8(output.stdout).unwrap();
-    let packages : Vec<&str> = raw_packages.lines().collect();
-
-    let packages_table: mlua::Table = globals.get("Packages")?;
-    let official_table: mlua::Table = packages_table.get("Official")?;
-    let aur_table: mlua::Table = packages_table.get("Aur")?;
-    let flatpak_table: mlua::Table = packages_table.get("Flatpak")?;
-
-    let _res2 = remove_packages(packages.clone(), flatpak_packages.clone(), official_table.clone(), aur_table.clone(), flatpak_table.clone());
-    let _res1 = install_packages(packages.clone(), flatpak_packages.clone(), official_table.clone(), aur_table.clone(), flatpak_table.clone());
     println!("Finished...");
     Ok(())
 }
