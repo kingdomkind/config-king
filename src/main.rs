@@ -173,7 +173,6 @@ fn main() -> Result<(), mlua::Error> {
                     
                     // Checking if already updated, if not, then build and continue
                     if String::from_utf8_lossy(&output.stdout) != "Already up to date.\n" {
-                        println!("Entered");
                         build_aur(string_str);
                     }
 
@@ -274,6 +273,7 @@ fn main() -> Result<(), mlua::Error> {
         let mut output = Command::new("sudo");
         output.arg("pacman");
         output.arg("-Rns");
+        if ASSUME_YES { output.arg("--noconfirm"); }
     
         let mut dep = Command::new("sudo");
         dep.arg("pacman");
