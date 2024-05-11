@@ -28,8 +28,8 @@ fn build_aur(name : &str) {
     output.arg("-si");
     if ASSUME_YES { output.arg("--noconfirm"); }
 
-    let ret_val = send_output(output);
-    if ret_val {
+    let success = send_output(output);
+    if success {
         println!("Installed (AUR) {}...", name);
     }
 }
@@ -101,18 +101,15 @@ fn main() -> Result<(), mlua::Error> {
                 } else {
                     println!("Attempting to install {}...", string_str);
 
-                    let output = Command::new("sudo")
-                    .arg("pacman")
-                    .arg("-S")
-                    .arg(string_str)
-                    .arg("--noconfirm")
-                    .output()
-                    .expect("Failed to execute command");
-                
-                    if output.status.success() {
+                    let mut output = Command::new("sudo");
+                    output.arg("pacman");
+                    output.arg("-S");
+                    output.arg(string_str);
+                    if ASSUME_YES { output.arg("--noconfirm"); }
+
+                    let success = send_output(output);
+                    if success {
                         println!("Installed {}...", string_str);
-                    } else {
-                        println!("{:?}", String::from_utf8_lossy(&output.stderr));
                     }
                 }
             },
@@ -249,17 +246,14 @@ fn main() -> Result<(), mlua::Error> {
                 } else {
                     println!("Attempting to install {}...", string_str);
 
-                    let output = Command::new("flatpak")
-                    .arg("install")
-                    .arg(string_str)
-                    .arg("--assumeyes")
-                    .output()
-                    .expect("Failed to execute command");
-                
-                    if output.status.success() {
+                    let mut output = Command::new("flatpak");
+                    output.arg("install");
+                    output.arg(string_str);
+                    if ASSUME_YES { output.arg("--assumeyes"); }
+
+                    let success = send_output(output);
+                    if success {
                         println!("Installed {}...", string_str);
-                    } else {
-                        println!("{:?}", String::from_utf8_lossy(&output.stderr));
                     }
                 }
             },
@@ -279,7 +273,6 @@ fn main() -> Result<(), mlua::Error> {
     if packages.len() > 0 {
         let mut output = Command::new("sudo");
         output.arg("pacman");
-        //output.arg("--noconfirm");
         output.arg("-Rns");
     
         let mut dep = Command::new("sudo");
@@ -292,19 +285,12 @@ fn main() -> Result<(), mlua::Error> {
             dep.arg(value);
         }
     
-        let dep = dep.output().expect("Failed to set packages to be dependencies!");
-
-        let ret_val : bool = send_output(output);
-    
-        if ret_val {
+        let success : bool = send_output(output);
+        if success {
             println!("Removed {:?}...", packages);
-        } else {
-            //println!("pacman -Rns failed with: Stdout: {:?}, Stderr: {:?}", String::from_utf8_lossy(&output.stdout), String::from_utf8_lossy(&output.stderr));
         }
-    
-        if !dep.status.success() {
-            println!("pacman -D failed with: Stdout: {:?}, Stderr: {:?}", String::from_utf8_lossy(&dep.stdout), String::from_utf8_lossy(&dep.stderr));
-        }
+
+        let success : bool = send_output(dep);
     
         Command::new("pacman").arg("-Syu").output().expect("Failed to update entire system...");
     }
@@ -312,30 +298,23 @@ fn main() -> Result<(), mlua::Error> {
     if flatpak_packages.len() > 0 {
         let mut output = Command::new("flatpak");
         output.arg("uninstall");
-        output.arg("--assumeyes");
+        if ASSUME_YES { output.arg("--assumeyes"); }
 
         for value in &flatpak_packages {
             output.arg(value);
         }
 
-        let output: Output = output.output().expect("Failed to remove packages!");
-
-        if output.status.success() {
+        let success = send_output(output);
+        if success {
             println!("Removed {:?}...", flatpak_packages);
-        } else {
-            println!("flatpak uninstall failed: {:?}, Stderr: {:?}", String::from_utf8_lossy(&output.stdout), String::from_utf8_lossy(&output.stderr));
         }
     
-        let output = Command::new("flatpak")
-        .arg("uninstall")
-        .arg("--unused")
-        .arg("--assumeyes")
-        .output()
-        .expect("Failed to execute command");
-    
-        if !output.status.success() {
-            println!("Failed to uninstall unused runtimes: {:?}", String::from_utf8_lossy(&output.stderr));
-        }
+        let mut output = Command::new("flatpak");
+        output.arg("uninstall");
+        output.arg("--unused");
+        if ASSUME_YES { output.arg("--assumeyes"); }
+
+        let success = send_output(output);
     }
 
     println!("Finished...");
