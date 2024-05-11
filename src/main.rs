@@ -7,7 +7,7 @@ fn logger(to_print: &'static str, log_level: &'static str) {
 } */
 
 fn send_output(mut output : Command) -> bool{
-    output.stdout(std::process::Stdio::null());
+    //output.stdout(std::process::Stdio::null());
     let mut spawned = output.spawn().expect("Unable to output command");
     let wait = spawned.wait().expect("Failed to wait for output to end");
     return wait.success();
