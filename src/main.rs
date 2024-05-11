@@ -1,5 +1,5 @@
 use mlua::prelude::*;
-use std::{env, fs, process::{Command, Output}, ptr::null};
+use std::{env, fs, io::{BufRead, BufReader}, process::{Command, Output}, };
 
 /* 
 fn logger(to_print: &'static str, log_level: &'static str) {
@@ -209,8 +209,6 @@ fn main() -> Result<(), mlua::Error> {
         }
     }
 
-
-    /* TODO, GET CURRENT FLATPAKS INSTALLED! */
     let flatpak_packages = Command::new("flatpak")
     .arg("list")
     .arg("--app")
@@ -283,13 +281,22 @@ fn main() -> Result<(), mlua::Error> {
         }
     
         let dep = dep.output().expect("Failed to set packages to be dependencies!");
+
+        let output = output.spawn().expect("msg");
+        let reader = BufReader::new(output.stdout.expect("Failed to capture stdout"));
+
+        for line in reader.lines() {
+            println!("{}", line.expect("Failed to read line"));
+        }
+
+        /* 
         let output: Output = output.output().expect("Failed to remove packages!");
     
         if output.status.success() {
             println!("Removed {:?}...", packages);
         } else {
             println!("pacman -Rns failed with: Stdout: {:?}, Stderr: {:?}", String::from_utf8_lossy(&output.stdout), String::from_utf8_lossy(&output.stderr));
-        }
+        } */
     
         if !dep.status.success() {
             println!("pacman -D failed with: Stdout: {:?}, Stderr: {:?}", String::from_utf8_lossy(&dep.stdout), String::from_utf8_lossy(&dep.stderr));
