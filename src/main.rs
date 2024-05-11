@@ -222,7 +222,7 @@ fn main() -> Result<(), mlua::Error> {
     let mut flatpak_packages : Vec<&str> = flatpak_packages.lines().collect();
     flatpak_packages.remove(0);
 
-    println!("Flatpaks to install: {:?}", flatpak_packages);
+    //println!("Flatpaks to install: {:?}", flatpak_packages);
 
     // Iterate over the config table
     for pair in flatpak_table.pairs::<mlua::Value, mlua::Value>() {
