@@ -19,7 +19,7 @@ Packages = {
 
     Aur = {
         {GlobalInstallLocation = "/home/pika/.config-king/aur/"},
-        downgrade
+        "downgrade"
     },
 
     Flatpak = {
