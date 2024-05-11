@@ -64,8 +64,15 @@ fn main() -> Result<(), mlua::Error> {
     let packages_table: mlua::Table = globals.get("Packages")?;
     let official_table: mlua::Table = packages_table.get("Official")?;
     let aur_table: mlua::Table = packages_table.get("Aur")?;
+    let flatpak_table: mlua::Table = packages_table.get("Flatpak")?;
 
-    // Iterate over the config table
+    /*
+    
+    INSTALLING PACKAGES
+
+     */
+
+    // Iterate over the official table
     for pair in official_table.pairs::<mlua::Value, mlua::Value>() {
         let (_key, value) = pair?;
         match value {
@@ -202,6 +209,61 @@ fn main() -> Result<(), mlua::Error> {
         }
     }
 
+
+    /* TODO, GET CURRENT FLATPAKS INSTALLED! */
+    let flatpak_packages = Command::new("flatpak")
+    .arg("list")
+    .arg("--app")
+    .output()
+    .expect("Failed to execute command");
+
+    let flatpak_packages: String = String::from_utf8(flatpak_packages.stdout).unwrap();
+    let mut flatpak_packages : Vec<&str> = flatpak_packages.lines().collect();
+
+    // Iterate over the config table
+    for pair in flatpak_table.pairs::<mlua::Value, mlua::Value>() {
+        let (_key, value) = pair?;
+        match value {
+
+            // STRING
+            mlua::Value::String(string) => {
+
+                let string_str = string.to_str().unwrap();
+
+                if flatpak_packages.contains(&string_str) {
+                    let index = flatpak_packages.iter().position(|&r| r == string_str);
+                    flatpak_packages.remove(index.unwrap());
+                    // println!("Already Installed {}...", string_str);
+                } else {
+                    println!("Attempting to install {}...", string_str);
+
+                    let output = Command::new("flatpak")
+                    .arg("install")
+                    .arg(string_str)
+                    .arg("--assumeyes")
+                    .output()
+                    .expect("Failed to execute command");
+                
+                    if output.status.success() {
+                        println!("Installed {}...", string_str);
+                    } else {
+                        println!("{:?}", String::from_utf8_lossy(&output.stderr));
+                    }
+                }
+            },
+
+            // Catch all function
+            _ => (),
+
+        }
+    }
+
+    /*
+    
+    REMOVING PACKAGES
+    
+     */
+
     if packages.len() > 0 {
         let mut output = Command::new("sudo");
         output.arg("pacman");
@@ -230,6 +292,10 @@ fn main() -> Result<(), mlua::Error> {
         if !dep.status.success() {
             println!("pacman -D failed with: Stdout: {:?}, Stderr: {:?}", String::from_utf8_lossy(&dep.stdout), String::from_utf8_lossy(&dep.stderr));
         }
+
+
+        /* REMOVE FLATPAK STUFF */
+
     
         Command::new("pacman").arg("-Syu").output().expect("Failed to update entire system...");
     }
