@@ -318,6 +318,7 @@ fn main() -> Result<(), mlua::Error> {
         let output = Command::new("flatpak")
         .arg("uninstall")
         .arg("--unused")
+        .arg("--assumeyes")
         .output()
         .expect("Failed to execute command");
     
