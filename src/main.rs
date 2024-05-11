@@ -6,6 +6,19 @@ fn logger(to_print: &'static str, log_level: &'static str) {
     let array = ["juan"];
 } */
 
+fn send_output(mut output : Command) -> bool{
+    let mut spawned = output.spawn().expect("Unable to output command");
+    let reader = BufReader::new(spawned.stdout.take().expect("Failed to capture stdout"));
+
+    for line in reader.lines() {
+        println!("{}", line.expect("Failed to read line"));
+    }
+
+    let wait = spawned.wait().expect("Failed to wait for output to end");
+    return  wait.success();
+
+}
+
 fn build_aur(name : &str) {
     println!("Building (AUR) {}...", name);
     let output = Command::new("makepkg")
@@ -282,13 +295,9 @@ fn main() -> Result<(), mlua::Error> {
     
         let dep = dep.output().expect("Failed to set packages to be dependencies!");
 
-        let output = output.spawn().expect("msg");
-        let reader = BufReader::new(output.stdout.expect("Failed to capture stdout"));
-
-        for line in reader.lines() {
-            println!("{}", line.expect("Failed to read line"));
-        }
-
+        let ret : bool = send_output(output);
+        println!("{}", ret);
+        
         /* 
         let output: Output = output.output().expect("Failed to remove packages!");
     
