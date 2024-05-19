@@ -1,10 +1,11 @@
 use mlua::prelude::*;
-use std::{env, fs, process::{exit, Command}};
+use std::{collections::{btree_map::Values, HashSet}, env, fs, process::{exit, Command}};
 
 /*
 BIG TODOS:
 
-    => The order of installing then removing packages needs to be reversed. You need to first remove the packages then install packages to prevent dependency issues.
+    => The order of installing then removing packages needs to be reversed. You need to first remove the packages then install
+    packages to prevent dependency issues.
     => Symlinks
 
 */
@@ -14,8 +15,36 @@ const SEE_STDOUT : bool = false;
 const SEE_STDERR : bool = true;
 const ASSUME_YES : bool = true;
 
+// Get Package Difference
+fn get_package_difference(lua_table : mlua::Table, rust_table : Vec<String>) -> Vec<String>{
+
+    let mut lua_packages : Vec<String> = vec![];
+
+    for pair in lua_table.pairs::<mlua::Value, mlua::Value>() {
+        ///* 
+        let Ok((_key, value)) = pair else { panic!() };
+        match value {
+
+            mlua::Value::String(string) => {
+                let string_str = string.to_str().unwrap().to_owned();
+                lua_packages.push(string_str);
+            },
+
+            _ => (),
+
+        }
+        //*/
+    };
+
+    let s1: HashSet<_> = lua_packages.iter().collect();
+    let s2: HashSet<_> = rust_table.iter().collect();
+    let diff: Vec<_> = s1.difference(&s2).collect();
+
+    return diff.iter().map(|x| x.to_string()).collect();
+}
+
 // Runs Commands, and displays the output and returns if successful
-fn send_output(mut output : Command) -> bool{
+fn send_output(mut output : Command) -> bool {
 
     if !SEE_STDOUT { output.stdout(std::process::Stdio::null()); }
     if !SEE_STDERR { output.stderr(std::process::Stdio::null()); }
@@ -87,6 +116,18 @@ fn main() -> Result<(), mlua::Error> {
     let aur_table: mlua::Table = packages_table.get("Aur")?;
     let flatpak_table: mlua::Table = packages_table.get("Flatpak")?;
 
+
+    let mut packages_to_remove = get_package_difference(official_table.clone(), packages.iter().map(|x| x.to_string()).collect());
+    packages_to_remove = get_package_difference(aur_table.clone(), packages_to_remove);
+    packages_to_remove = get_package_difference(flatpak_table.clone(), packages_to_remove);
+
+
+    println!("Rem");
+    for element in &packages_to_remove {
+        println!("{}", element);
+    }
+    println!("Rem");
+    
     // INSTALLING PACKAGES //
 
     // Installing official packages
