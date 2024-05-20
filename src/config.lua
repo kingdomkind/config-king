@@ -13,6 +13,8 @@ Packages = {
         "ttf-jetbrains-mono-nerd",
         "flatpak",
         "fastfetch",
+        "neofetch",
+        "gnome",
     },
 
     Aur = {
