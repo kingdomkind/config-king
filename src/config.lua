@@ -10,6 +10,7 @@ Packages = {
         "networkmanager",
         "openssh",
         "rustup",
+        "ttf-jetbrains-mono-nerd",
         "flatpak",
     },
 
