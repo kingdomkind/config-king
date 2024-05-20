@@ -95,12 +95,6 @@ fn main() -> Result<(), mlua::Error> {
     let globals = lua.globals();
     lua.load(&lua_script).exec()?;
 
-    // Upgrade System
-    let mut output = Command::new("sudo");
-    output.arg("pacman");
-    output.arg("-Syu");
-    send_output(output);
-
     // Get currently installed packages -- this one needs to use .output to get the stdout.
     let output = Command::new("pacman")
     .arg("-Qeq")
@@ -134,15 +128,10 @@ fn main() -> Result<(), mlua::Error> {
     let mut flatpak_packages : Vec<&str> = flatpak_packages.lines().collect();
     flatpak_packages.remove(0); // Remove the first value as it's the header "APPLICATION ID"
 
-    //let mut packages_to_remove = get_package_difference(official_table.clone(), packages.iter().map(|x| x.to_string()).collect());
-    //let mut aur_diff = get_package_difference(aur_table.clone(), packages_to_remove.clone());
-    //let flatpak_diff = get_package_difference(flatpak_table.clone(), flatpak_packages.iter().map(|x| x.to_string()).collect());
 
-    // LOGIC ISSUE RN. INSTEAD OF GETTING DIFF, JUST CONTINUOUSLY REMOVE VALUES FROM THE CURRENTLY INTSALLED PACKAGES FOR EACH TABLE. WHEN YOU ARE AT THE
-    // FLATPAK TABLE, THEN YOU CAN USE THE DIFF AND KEEP THAT IN ITS OWN TABLE AS FLATPAKS ARE UNINSTALLED SEPERATELY
+    // REMOVING PACKAGES //
 
-    //packages_to_remove.append(&mut aur_diff);
-
+    // Getting packages to remove
     let mut packages_to_remove = subtract_lua_vec(packages.iter().map(|x| x.to_string()).collect(), official_table.clone());
     packages_to_remove = subtract_lua_vec(packages_to_remove, aur_table.clone());
     let flapak_packages_to_remove: Vec<String> = subtract_lua_vec(flatpak_packages.iter().map(|x| x.to_string()).collect(), flatpak_table.clone());
@@ -156,7 +145,61 @@ fn main() -> Result<(), mlua::Error> {
     }
     println!("rem"); 
 
+    // Removing regular packages
+    if packages_to_remove.len() > 0 {
+        let mut output = Command::new("sudo");
+        output.arg("pacman");
+        output.arg("-Rns");
+        if ASSUME_YES { output.arg("--noconfirm"); }
+    
+        let mut dep = Command::new("sudo");
+        dep.arg("pacman");
+        dep.arg("--asdep");
+        dep.arg("-D");
+    
+        for value in &packages_to_remove {
+            output.arg(value);
+            dep.arg(value);
+        }
+    
+        let success : bool = send_output(output);
+        if success {
+            println!("Removed {:?}...", packages_to_remove);
+        } else {
+            let _success : bool = send_output(dep);
+        }    
+    }
+
+    // Removing flatpack packages
+    if flapak_packages_to_remove.len() > 0 {
+        let mut output = Command::new("flatpak");
+        output.arg("uninstall");
+        if ASSUME_YES { output.arg("--assumeyes"); }
+
+        for value in &flapak_packages_to_remove {
+            output.arg(value);
+        }
+
+        let success = send_output(output);
+        if success {
+            println!("Removed {:?}...", flapak_packages_to_remove);
+        }
+    
+        let mut output = Command::new("flatpak");
+        output.arg("uninstall");
+        output.arg("--unused");
+        if ASSUME_YES { output.arg("--assumeyes"); }
+
+        let _success = send_output(output);
+    }
+
     // INSTALLING PACKAGES //
+
+    // Upgrade System
+    let mut output = Command::new("sudo");
+    output.arg("pacman");
+    output.arg("-Syu");
+    send_output(output);
 
     // Installing official packages
     for pair in official_table.pairs::<mlua::Value, mlua::Value>() {
@@ -282,20 +325,7 @@ fn main() -> Result<(), mlua::Error> {
         }
     }
 
-    /*
     // Installing flatpak packages
-    let flatpak_packages = Command::new("flatpak")
-    .arg("list")
-    .arg("--app")
-    .arg("--columns=application")
-    .output()
-    .expect("Failed to execute command");
-
-    let flatpak_packages: String = String::from_utf8(flatpak_packages.stdout).unwrap();
-    let mut flatpak_packages : Vec<&str> = flatpak_packages.lines().collect();
-    flatpak_packages.remove(0); // Remove the first value as it's the header "APPLICATION ID"
-    */
-
     for pair in flatpak_table.pairs::<mlua::Value, mlua::Value>() {
         let (_key, value) = pair?;
         match value {
@@ -325,56 +355,6 @@ fn main() -> Result<(), mlua::Error> {
             _ => (),
 
         }
-    }
-
-    // REMOVING PACKAGES //
-
-    if packages.len() > 0 {
-        let mut output = Command::new("sudo");
-        output.arg("pacman");
-        output.arg("-Rns");
-        if ASSUME_YES { output.arg("--noconfirm"); }
-    
-        let mut dep = Command::new("sudo");
-        dep.arg("pacman");
-        dep.arg("--asdep");
-        dep.arg("-D");
-    
-        for value in &packages {
-            output.arg(value);
-            dep.arg(value);
-        }
-    
-        let success : bool = send_output(output);
-        if success {
-            println!("Removed {:?}...", packages);
-        } else {
-            let _success : bool = send_output(dep);
-        }
-    
-        Command::new("pacman").arg("-Syu").output().expect("Failed to update entire system...");
-    }
-
-    if flatpak_packages.len() > 0 {
-        let mut output = Command::new("flatpak");
-        output.arg("uninstall");
-        if ASSUME_YES { output.arg("--assumeyes"); }
-
-        for value in &flatpak_packages {
-            output.arg(value);
-        }
-
-        let success = send_output(output);
-        if success {
-            println!("Removed {:?}...", flatpak_packages);
-        }
-    
-        let mut output = Command::new("flatpak");
-        output.arg("uninstall");
-        output.arg("--unused");
-        if ASSUME_YES { output.arg("--assumeyes"); }
-
-        let _success = send_output(output);
     }
 
     println!("Finished...");
