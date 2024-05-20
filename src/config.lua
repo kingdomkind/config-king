@@ -12,6 +12,7 @@ Packages = {
         "rustup",
         "ttf-jetbrains-mono-nerd",
         "flatpak",
+        "fastfetch",
     },
 
     Aur = {
