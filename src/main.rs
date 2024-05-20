@@ -247,6 +247,35 @@ fn main() -> Result<(), mlua::Error> {
                 } else {
                     println!("Attempting to install {}...", string_str);
 
+                    let mut is_group : bool = false;
+                    let output = Command::new("pacman")
+                    .arg("-Sg")
+                    .arg(string_str)
+                    .output()
+                    .expect("Failed to execute command");
+
+                    let raw_out: String = String::from_utf8(output.stdout).unwrap();
+                    let out : Vec<&str> = raw_out.lines().collect();
+
+                    if out.len() != 0 {
+                        is_group = true;
+                        println!("We got em boys");
+                    } else {
+                        println!("Nada");
+                    }
+
+                    if is_group {
+                        println!("SKIPPING: The specified package of {} is a package group, which is not supported...", string_str);
+                        println!("Please instead install the packages specified by the group. See specified packages? [y/n]");
+                        let see_packages = get_confirmation();
+                        if see_packages {
+                            for value in out {
+                                println!("{}", value);
+                            }
+                        }
+                        break;
+                    }
+
                     let mut output = Command::new("sudo");
                     output.arg("pacman");
                     output.arg("-S");
