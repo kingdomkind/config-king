@@ -1,5 +1,6 @@
 use mlua::prelude::*;
 use std::{env, fs, io, process::{exit, Command}};
+use colour::*;
 
 /*
 BIG TODOS:
@@ -247,6 +248,10 @@ fn main() -> Result<(), mlua::Error> {
                 } else {
                     println!("Attempting to install {}...", string_str);
 
+                    // First we need to check if the package is in a group
+                    // Ideally, we would allow group installations but it presents the issue of the config
+                    // not lining up with installed packages, and without the ability to tell if a package
+                    // was installed via a group, we cannot remedy this
                     let mut is_group : bool = false;
                     let output = Command::new("pacman")
                     .arg("-Sg")
@@ -259,14 +264,11 @@ fn main() -> Result<(), mlua::Error> {
 
                     if out.len() != 0 {
                         is_group = true;
-                        println!("We got em boys");
-                    } else {
-                        println!("Nada");
                     }
 
                     if is_group {
-                        println!("SKIPPING: The specified package of {} is a package group, which is not supported...", string_str);
-                        println!("Please instead install the packages specified by the group. See specified packages? [y/n]");
+                        yellow_ln!("SKIPPING: The specified package of "{}" is a package group, which is not supported...", string_str);
+                        yellow_ln!("Please instead install the packages specified by the group. See specified packages? [y/n]");
                         let see_packages = get_confirmation();
                         if see_packages {
                             for value in out {

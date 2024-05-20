@@ -7,3 +7,4 @@ edition = "2021"
 
 [dependencies]
 mlua = { version = "0.9.7", features = ["lua54", "vendored"] }
+colour = "2.0.0"
