@@ -399,7 +399,7 @@ fn main() -> Result<(), mlua::Error> {
                 if flatpak_packages.contains(&string_str) {
                     let index = flatpak_packages.iter().position(|&r| r == string_str);
                     flatpak_packages.remove(index.unwrap());
-                    println!("Already Installed {}...", string_str);
+                    blue_ln!("Already Installed {}...", string_str);
                 } else {
                     println!("Attempting to install {}...", string_str);
 
