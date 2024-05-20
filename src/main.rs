@@ -267,7 +267,7 @@ fn main() -> Result<(), mlua::Error> {
                     }
 
                     if is_group {
-                        yellow_ln!("SKIPPING: The specified package of "{}" is a package group, which is not supported...", string_str);
+                        yellow_ln!("SKIPPING: The specified package of \"{}\" is a package group, which is not supported...", string_str);
                         yellow_ln!("Please instead install the packages specified by the group. See specified packages? [y/n]");
                         let see_packages = get_confirmation();
                         if see_packages {
