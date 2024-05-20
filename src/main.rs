@@ -15,32 +15,38 @@ const SEE_STDOUT : bool = false;
 const SEE_STDERR : bool = true;
 const ASSUME_YES : bool = true;
 
-// Get Package Difference
-fn get_package_difference(lua_table : mlua::Table, rust_table : Vec<String>) -> Vec<String>{
+fn subtract_lua_vec(rust_table : Vec<String>, lua_table : mlua::Table) -> Vec<String> {
 
-    let mut lua_packages : Vec<String> = vec![];
-
+    let mut rust_table = rust_table;
     for pair in lua_table.pairs::<mlua::Value, mlua::Value>() {
-        ///* 
         let Ok((_key, value)) = pair else { panic!() };
         match value {
 
             mlua::Value::String(string) => {
-                let string_str = string.to_str().unwrap().to_owned();
-                lua_packages.push(string_str);
+                let string = string.to_str().unwrap().to_string();
+                if rust_table.contains(&string) {
+                    let index = rust_table.iter().position(|r| *r == string);
+                    rust_table.remove(index.unwrap());
+                }
             },
-
             _ => (),
 
         }
-        //*/
     };
 
-    let s1: HashSet<_> = lua_packages.iter().collect();
-    let s2: HashSet<_> = rust_table.iter().collect();
-    let diff: Vec<_> = s1.difference(&s2).collect();
+    return rust_table;
+}
 
-    return diff.iter().map(|x| x.to_string()).collect();
+fn subtract_rust_vec(rust_table : Vec<String>, subtract_table : Vec<String>) -> Vec<String> {
+    let mut rust_table = rust_table;
+    for value in subtract_table.iter() {
+        if rust_table.contains(&value) {
+            let index = rust_table.iter().position(|r| r == value);
+            rust_table.remove(index.unwrap());
+        }
+    };
+
+    return rust_table;
 }
 
 // Runs Commands, and displays the output and returns if successful
@@ -116,18 +122,38 @@ fn main() -> Result<(), mlua::Error> {
     let aur_table: mlua::Table = packages_table.get("Aur")?;
     let flatpak_table: mlua::Table = packages_table.get("Flatpak")?;
 
-
-    let mut packages_to_remove = get_package_difference(official_table.clone(), packages.iter().map(|x| x.to_string()).collect());
-    packages_to_remove = get_package_difference(aur_table.clone(), packages_to_remove);
-    packages_to_remove = get_package_difference(flatpak_table.clone(), packages_to_remove);
-
-
-    println!("Rem");
-    for element in &packages_to_remove {
-        println!("{}", element);
-    }
-    println!("Rem");
+    // flatpak packages
+    let flatpak_packages = Command::new("flatpak")
+    .arg("list")
+    .arg("--app")
+    .arg("--columns=application")
+    .output()
+    .expect("Failed to execute command");
     
+    let flatpak_packages: String = String::from_utf8(flatpak_packages.stdout).unwrap();
+    let mut flatpak_packages : Vec<&str> = flatpak_packages.lines().collect();
+    flatpak_packages.remove(0); // Remove the first value as it's the header "APPLICATION ID"
+
+    //let mut packages_to_remove = get_package_difference(official_table.clone(), packages.iter().map(|x| x.to_string()).collect());
+    //let mut aur_diff = get_package_difference(aur_table.clone(), packages_to_remove.clone());
+    //let flatpak_diff = get_package_difference(flatpak_table.clone(), flatpak_packages.iter().map(|x| x.to_string()).collect());
+
+    // LOGIC ISSUE RN. INSTEAD OF GETTING DIFF, JUST CONTINUOUSLY REMOVE VALUES FROM THE CURRENTLY INTSALLED PACKAGES FOR EACH TABLE. WHEN YOU ARE AT THE
+    // FLATPAK TABLE, THEN YOU CAN USE THE DIFF AND KEEP THAT IN ITS OWN TABLE AS FLATPAKS ARE UNINSTALLED SEPERATELY
+
+    //packages_to_remove.append(&mut aur_diff);
+
+    let mut packages_to_remove = subtract_lua_vec(packages.iter().map(|x| x.to_string()).collect(), official_table.clone());
+    packages_to_remove = subtract_lua_vec(packages_to_remove, aur_table.clone());
+    let flapak_packages_to_remove = subtract_lua_vec(flatpak_packages.iter().map(|x| x.to_string()).collect(), flatpak_table.clone());
+    packages_to_remove = subtract_rust_vec(packages_to_remove, flapak_packages_to_remove);
+
+    println!("rem");
+    for val in packages_to_remove.iter() {
+        println!("{}", val);
+    }
+    println!("rem");
+
     // INSTALLING PACKAGES //
 
     // Installing official packages
@@ -254,6 +280,7 @@ fn main() -> Result<(), mlua::Error> {
         }
     }
 
+    /*
     // Installing flatpak packages
     let flatpak_packages = Command::new("flatpak")
     .arg("list")
@@ -265,6 +292,7 @@ fn main() -> Result<(), mlua::Error> {
     let flatpak_packages: String = String::from_utf8(flatpak_packages.stdout).unwrap();
     let mut flatpak_packages : Vec<&str> = flatpak_packages.lines().collect();
     flatpak_packages.remove(0); // Remove the first value as it's the header "APPLICATION ID"
+    */
 
     for pair in flatpak_table.pairs::<mlua::Value, mlua::Value>() {
         let (_key, value) = pair?;
