@@ -145,14 +145,16 @@ fn main() -> Result<(), mlua::Error> {
 
     let mut packages_to_remove = subtract_lua_vec(packages.iter().map(|x| x.to_string()).collect(), official_table.clone());
     packages_to_remove = subtract_lua_vec(packages_to_remove, aur_table.clone());
-    let flapak_packages_to_remove = subtract_lua_vec(flatpak_packages.iter().map(|x| x.to_string()).collect(), flatpak_table.clone());
-    packages_to_remove = subtract_rust_vec(packages_to_remove, flapak_packages_to_remove);
+    let flapak_packages_to_remove: Vec<String> = subtract_lua_vec(flatpak_packages.iter().map(|x| x.to_string()).collect(), flatpak_table.clone());
 
     println!("rem");
     for val in packages_to_remove.iter() {
         println!("{}", val);
     }
-    println!("rem");
+    for val in flapak_packages_to_remove.iter() {
+        println!("{}", val);
+    }
+    println!("rem"); 
 
     // INSTALLING PACKAGES //
 
