@@ -10,7 +10,6 @@ Packages = {
         "networkmanager",
         "openssh",
         "rustup",
-        "ttf-jetbrains-mono-nerd",
         "flatpak",
     },
 
@@ -20,6 +19,5 @@ Packages = {
     },
 
     Flatpak = {
-        "org.gimp.GIMP",
     },
 }
