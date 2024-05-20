@@ -23,10 +23,10 @@ fn get_confirmation() -> bool {
 
         io::stdin().read_line(&mut response).expect("failed to readline");
 
-        match response.to_lowercase().as_str() {
+        match response.trim().to_lowercase().as_str() {
             "yes" | "y" | "ye" => choice = true,
             "no" | "n" | "nah" => choice = false,
-            "\n" => { if DEFAULT_YES { choice = true; } else { choice = false; } },
+            "" => { if DEFAULT_YES { choice = true; } else { choice = false; } },
             _ => accepted_response = false,
         }
     }
