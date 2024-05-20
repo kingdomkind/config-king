@@ -1,19 +1,38 @@
 use mlua::prelude::*;
-use std::{collections::{btree_map::Values, HashSet}, env, fs, process::{exit, Command}};
+use std::{env, fs, io, process::{exit, Command}};
 
 /*
 BIG TODOS:
-
-    => The order of installing then removing packages needs to be reversed. You need to first remove the packages then install
-    packages to prevent dependency issues.
     => Symlinks
-
 */
 
 // Config Variables
 const SEE_STDOUT : bool = false;
 const SEE_STDERR : bool = true;
 const ASSUME_YES : bool = true;
+const PACKAGE_REMOVE_WARN_LIMIT : u32 = 5;
+const DEFAULT_YES : bool = true;
+
+fn get_confirmation() -> bool {
+    let mut accepted_response = false;
+    let mut choice : bool = false;
+
+    while !accepted_response {
+        let mut response = String::new();
+        accepted_response = true;
+
+        io::stdin().read_line(&mut response).expect("failed to readline");
+
+        match response.to_lowercase().as_str() {
+            "yes" | "y" | "ye" => choice = true,
+            "no" | "n" | "nah" => choice = false,
+            "\n" => { if DEFAULT_YES { choice = true; } else { choice = false; } },
+            _ => accepted_response = false,
+        }
+    }
+
+    return choice;
+}
 
 fn subtract_lua_vec(rust_table : Vec<String>, lua_table : mlua::Table) -> Vec<String> {
 
@@ -37,6 +56,7 @@ fn subtract_lua_vec(rust_table : Vec<String>, lua_table : mlua::Table) -> Vec<St
     return rust_table;
 }
 
+/*
 fn subtract_rust_vec(rust_table : Vec<String>, subtract_table : Vec<String>) -> Vec<String> {
     let mut rust_table = rust_table;
     for value in subtract_table.iter() {
@@ -47,7 +67,7 @@ fn subtract_rust_vec(rust_table : Vec<String>, subtract_table : Vec<String>) -> 
     };
 
     return rust_table;
-}
+} */
 
 // Runs Commands, and displays the output and returns if successful
 fn send_output(mut output : Command) -> bool {
@@ -136,65 +156,77 @@ fn main() -> Result<(), mlua::Error> {
     packages_to_remove = subtract_lua_vec(packages_to_remove, aur_table.clone());
     let flapak_packages_to_remove: Vec<String> = subtract_lua_vec(flatpak_packages.iter().map(|x| x.to_string()).collect(), flatpak_table.clone());
 
-    println!("rem");
-    for val in packages_to_remove.iter() {
-        println!("{}", val);
-    }
-    for val in flapak_packages_to_remove.iter() {
-        println!("{}", val);
-    }
-    println!("rem"); 
+    // Checking if we should actually remove the packages, if above the regular warn limit
+    let mut should_remove_package : bool = true;
+    if (packages_to_remove.len() + flapak_packages_to_remove.len()) > PACKAGE_REMOVE_WARN_LIMIT.try_into().unwrap() {
+        println!("Packages to remove is above the warning limit of {} and are:", PACKAGE_REMOVE_WARN_LIMIT);
 
-    // Removing regular packages
-    if packages_to_remove.len() > 0 {
-        let mut output = Command::new("sudo");
-        output.arg("pacman");
-        output.arg("-Rns");
-        if ASSUME_YES { output.arg("--noconfirm"); }
-    
-        let mut dep = Command::new("sudo");
-        dep.arg("pacman");
-        dep.arg("--asdep");
-        dep.arg("-D");
-    
         for value in &packages_to_remove {
-            output.arg(value);
-            dep.arg(value);
+            println!("{}", value);
         }
-    
-        let success : bool = send_output(output);
-        if success {
-            println!("Removed {:?}...", packages_to_remove);
-        } else {
-            let _success : bool = send_output(dep);
-        }    
+
+        println!("Are you sure you want to remove the specified packages? [y/n]");
+        should_remove_package = get_confirmation();
     }
 
-    // Removing flatpack packages
-    if flapak_packages_to_remove.len() > 0 {
-        let mut output = Command::new("flatpak");
-        output.arg("uninstall");
-        if ASSUME_YES { output.arg("--assumeyes"); }
-
-        for value in &flapak_packages_to_remove {
-            output.arg(value);
+    if should_remove_package {
+        // Removing regular packages
+        if packages_to_remove.len() > 0 {
+            let mut output = Command::new("sudo");
+            output.arg("pacman");
+            output.arg("-Rns");
+            if ASSUME_YES { output.arg("--noconfirm"); }
+        
+            let mut dep = Command::new("sudo");
+            dep.arg("pacman");
+            dep.arg("--asdep");
+            dep.arg("-D");
+        
+            for value in &packages_to_remove {
+                output.arg(value);
+                dep.arg(value);
+            }
+        
+            let success : bool = send_output(output);
+            if success {
+                println!("Removed {:?}...", packages_to_remove);
+            } else {
+                let _success : bool = send_output(dep);
+            }    
         }
 
-        let success = send_output(output);
-        if success {
-            println!("Removed {:?}...", flapak_packages_to_remove);
-        }
-    
-        let mut output = Command::new("flatpak");
-        output.arg("uninstall");
-        output.arg("--unused");
-        if ASSUME_YES { output.arg("--assumeyes"); }
+        // Removing flatpack packages
+        if flapak_packages_to_remove.len() > 0 {
+            let mut output = Command::new("flatpak");
+            output.arg("uninstall");
+            if ASSUME_YES { output.arg("--assumeyes"); }
 
-        let _success = send_output(output);
+            for value in &flapak_packages_to_remove {
+                output.arg(value);
+            }
+
+            let success = send_output(output);
+            if success {
+                println!("Removed {:?}...", flapak_packages_to_remove);
+            }
+        
+            let mut output = Command::new("flatpak");
+            output.arg("uninstall");
+            output.arg("--unused");
+            if ASSUME_YES { output.arg("--assumeyes"); }
+
+            let _success = send_output(output);
+        }
+
+        println!("Finished removing packages...");
+    } else {
+        println!("Skipping removing packages...");
     }
 
     // INSTALLING PACKAGES //
 
+    println!("Installing Packages...");
+    println!("Upgrading System...");
     // Upgrade System
     let mut output = Command::new("sudo");
     output.arg("pacman");
@@ -356,7 +388,8 @@ fn main() -> Result<(), mlua::Error> {
 
         }
     }
+    println!("Finished installing packages...");
 
-    println!("Finished...");
+    println!("Finished (Completed all tasks)...");
     Ok(())
 }
