@@ -21,7 +21,7 @@ Cyan - New section
 
 // Config Variables
 const SEE_STDOUT : bool = false;
-const SEE_STDERR : bool = true;
+const SEE_STDERR : bool = false;
 const ASSUME_YES : bool = true;
 const PACKAGE_REMOVE_WARN_LIMIT : u32 = 5;
 const DEFAULT_YES : bool = true;
