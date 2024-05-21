@@ -355,11 +355,12 @@ fn main() -> Result<(), mlua::Error> {
                     } else {
                         red_ln!("{:?}", String::from_utf8_lossy(&output.stderr));
                     }
-                    println!("{}", String::from_utf8_lossy(&output.stdout));
                     
                     // Checking if already updated, if not, then build and continue
                     if String::from_utf8_lossy(&output.stdout) != "Already up to date.\n" {
                         build_aur(string_str);
+                    } else {
+                        grey_ln!("(AUR) {} is already up to date...", string_str);
                     }
 
                     env::set_current_dir(og_directory)?;
