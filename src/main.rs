@@ -11,7 +11,7 @@ BIG TODOS:
 COLOUR CODING:
 
 Green - Action is successful
-Blue - Action is already done
+Grey - Action is already done
 Default - Output from the bash commands
 Yellow - Warning (ie. can be recovered from or only prevents one specific thing)
 Red - Critical Error that prevents that overall stage from working properly, needs immediate attention
@@ -235,7 +235,7 @@ fn main() -> Result<(), mlua::Error> {
 
         white_ln_bold!("Finished removing packages...");
     } else {
-        blue_ln!("Skipping removing packages...");
+        grey_ln!("Skipping removing packages...");
     }
 
     // INSTALLING PACKAGES //
@@ -412,7 +412,7 @@ fn main() -> Result<(), mlua::Error> {
                 if flatpak_packages.contains(&string_str) {
                     let index = flatpak_packages.iter().position(|&r| r == string_str);
                     flatpak_packages.remove(index.unwrap());
-                    blue_ln!("Already Installed {}...", string_str);
+                    grey_ln!("Already Installed {}...", string_str);
                 } else {
                     white_ln_bold!("Attempting to install {}...", string_str);
 
