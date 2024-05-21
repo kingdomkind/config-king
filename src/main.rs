@@ -7,6 +7,18 @@ BIG TODOS:
     => Symlinks
 */
 
+/*
+COLOUR CODING:
+
+Green - Action is successful
+Blue - Action is already done
+Default - Output from the bash commands
+Yellow - Warning (ie. can be recovered from or only prevents one specific thing)
+Red - Critical Error that prevents that overall stage from working properly, needs immediate attention
+Bold White - Expected output that will always occur / Part of an action that is not yet finished
+Cyan - New section
+*/
+
 // Config Variables
 const SEE_STDOUT : bool = false;
 const SEE_STDERR : bool = true;
@@ -83,7 +95,7 @@ fn send_output(mut output : Command) -> bool {
 
 // Builds AUR packages and installs them
 fn build_aur(name : &str) {
-    println!("Building (AUR) {}...", name);
+    white_ln_bold!("Building (AUR) {}...", name);
 
     let mut output = Command::new("makepkg");
     output.arg("-si");
@@ -91,7 +103,7 @@ fn build_aur(name : &str) {
 
     let success = send_output(output);
     if success {
-        println!("Installed (AUR) {}...", name);
+        green_ln!("Installed (AUR) {}...", name);
     }
 }
 
@@ -157,16 +169,18 @@ fn main() -> Result<(), mlua::Error> {
     packages_to_remove = subtract_lua_vec(packages_to_remove, aur_table.clone());
     let flapak_packages_to_remove: Vec<String> = subtract_lua_vec(flatpak_packages.iter().map(|x| x.to_string()).collect(), flatpak_table.clone());
 
+    cyan_ln!("Beginning to remove packages...");
+
     // Checking if we should actually remove the packages, if above the regular warn limit
     let mut should_remove_package : bool = true;
     if (packages_to_remove.len() + flapak_packages_to_remove.len()) > PACKAGE_REMOVE_WARN_LIMIT.try_into().unwrap() {
-        println!("Packages to remove is above the warning limit of {} and are:", PACKAGE_REMOVE_WARN_LIMIT);
+        yellow_ln!("Packages to remove is above the warning limit of {} and are:", PACKAGE_REMOVE_WARN_LIMIT);
 
         for value in &packages_to_remove {
-            println!("{}", value);
+            yellow_ln!("{}", value);
         }
 
-        println!("Are you sure you want to remove the specified packages? [y/n]");
+        yellow_ln!("Are you sure you want to remove the specified packages? [y/n]");
         should_remove_package = get_confirmation();
     }
 
@@ -190,7 +204,7 @@ fn main() -> Result<(), mlua::Error> {
         
             let success : bool = send_output(output);
             if success {
-                println!("Removed {:?}...", packages_to_remove);
+                green_ln!("Removed {:?}...", packages_to_remove);
             } else {
                 let _success : bool = send_output(dep);
             }    
@@ -208,7 +222,7 @@ fn main() -> Result<(), mlua::Error> {
 
             let success = send_output(output);
             if success {
-                println!("Removed {:?}...", flapak_packages_to_remove);
+                green_ln!("Removed {:?}...", flapak_packages_to_remove);
             }
         
             let mut output = Command::new("flatpak");
@@ -219,15 +233,15 @@ fn main() -> Result<(), mlua::Error> {
             let _success = send_output(output);
         }
 
-        println!("Finished removing packages...");
+        white_ln_bold!("Finished removing packages...");
     } else {
-        println!("Skipping removing packages...");
+        blue_ln!("Skipping removing packages...");
     }
 
     // INSTALLING PACKAGES //
 
-    println!("Installing Packages...");
-    println!("Upgrading System...");
+    cyan_ln!("Installing Packages...");
+    white_ln_bold!("Upgrading System...");
     // Upgrade System
     let mut output = Command::new("sudo");
     output.arg("pacman");
@@ -244,9 +258,8 @@ fn main() -> Result<(), mlua::Error> {
                 if packages.contains(&string_str) {
                     let index = packages.iter().position(|&r| r == string_str);
                     packages.remove(index.unwrap());
-                    // println!("Already Installed {}...", string_str);
                 } else {
-                    println!("Attempting to install {}...", string_str);
+                    white_ln_bold!("Attempting to install {}...", string_str);
 
                     // First we need to check if the package is in a group
                     // Ideally, we would allow group installations but it presents the issue of the config
@@ -272,7 +285,7 @@ fn main() -> Result<(), mlua::Error> {
                         let see_packages = get_confirmation();
                         if see_packages {
                             for value in out {
-                                println!("{}", value);
+                                yellow_ln!("{}", value);
                             }
                         }
                         break;
@@ -286,7 +299,7 @@ fn main() -> Result<(), mlua::Error> {
 
                     let success = send_output(output);
                     if success {
-                        println!("Installed {}...", string_str);
+                        green_ln!("Installed {}...", string_str);
                     }
                 }
             },
@@ -338,11 +351,11 @@ fn main() -> Result<(), mlua::Error> {
                     .expect("Failed to execute command");
 
                     if output.status.success() {
-                        println!("Pulled (AUR) {}...", string_str);
+                        white_ln_bold!("Pulled (AUR) {}...", string_str);
                     } else {
-                        println!("{:?}", String::from_utf8_lossy(&output.stderr));
+                        red_ln!("{:?}", String::from_utf8_lossy(&output.stderr));
                     }
-                    println!("{}", String::from_utf8_lossy(&output.stdout));
+                    //println!("{}", String::from_utf8_lossy(&output.stdout));
                     
                     // Checking if already updated, if not, then build and continue
                     if String::from_utf8_lossy(&output.stdout) != "Already up to date.\n" {
@@ -355,13 +368,13 @@ fn main() -> Result<(), mlua::Error> {
                 } else {
                     // Package isn't installed, need to set it up and install it
                     if global_install_location.is_empty() {
-                        println!("Unable to install (AUR) {} as the install location was not specified. (Try specifying GlobalInstallLocation?)", string_str);
+                        yellow_ln!("Unable to install (AUR) {} as the install location was not specified. (Try specifying GlobalInstallLocation?)", string_str);
                         break;
                     }
 
-                    println!("Attempting to install (AUR) {}...", string_str);
+                    white_ln_bold!("Attempting to install (AUR) {}...", string_str);
                     let directory = global_install_location.clone() + "/" + string_str; // Can lead to double slash instances but doesn't seem to do anything
-                    println!("Creating Directory at: {:?}", directory);
+                    white_ln_bold!("Creating Directory at: {:?}", directory);
                     fs::create_dir_all::<&str>(directory.as_ref())?;
 
                     let output = Command::new("git")
@@ -372,9 +385,9 @@ fn main() -> Result<(), mlua::Error> {
                     .expect("Failed to execute command");
                 
                     if output.status.success() {
-                        println!("Cloned (AUR) {}...", string_str);
+                        white_ln_bold!("Cloned (AUR) {}...", string_str);
                     } else {
-                        println!("{:?}", String::from_utf8_lossy(&output.stderr));
+                        red_ln!("{:?}", String::from_utf8_lossy(&output.stderr));
                     }
 
                     let og_directory = get_current_directory();
@@ -401,7 +414,7 @@ fn main() -> Result<(), mlua::Error> {
                     flatpak_packages.remove(index.unwrap());
                     blue_ln!("Already Installed {}...", string_str);
                 } else {
-                    println!("Attempting to install {}...", string_str);
+                    white_ln_bold!("Attempting to install {}...", string_str);
 
                     let mut output = Command::new("flatpak");
                     output.arg("install");
@@ -410,7 +423,7 @@ fn main() -> Result<(), mlua::Error> {
 
                     let success = send_output(output);
                     if success {
-                        println!("Installed {}...", string_str);
+                        green_ln!("Installed {}...", string_str);
                     }
                 }
             },
@@ -419,8 +432,8 @@ fn main() -> Result<(), mlua::Error> {
 
         }
     }
-    println!("Finished installing packages...");
+    white_ln_bold!("Finished installing packages...");
 
-    println!("Finished (Completed all tasks)...");
+    cyan_ln!("Finished (Completed all tasks)...");
     Ok(())
 }
