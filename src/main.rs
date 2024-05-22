@@ -103,7 +103,8 @@ fn build_aur(name : &str) {
 
     let success = send_output(output);
     if success {
-        green_ln!("Installed (AUR) {}...", name);
+        green!("Installed: ");
+        white_ln_bold!("(AUR) {}...", name);
     }
 }
 
@@ -170,7 +171,7 @@ fn main() -> Result<(), mlua::Error> {
     let flapak_packages_to_remove: Vec<String> = subtract_lua_vec(flatpak_packages.iter().map(|x| x.to_string()).collect(), flatpak_table.clone());
 
     cyan!("Starting: ");
-    println!("Removing packages...");
+    white_ln_bold!("Removing packages...");
 
     // Checking if we should actually remove the packages, if above the regular warn limit
     let mut should_remove_package : bool = true;
@@ -205,7 +206,8 @@ fn main() -> Result<(), mlua::Error> {
         
             let success : bool = send_output(output);
             if success {
-                green_ln!("Removed {:?}...", packages_to_remove);
+                green!("Removed: ");
+                white_ln_bold!("{:?}...", packages_to_remove);
             } else {
                 let _success : bool = send_output(dep);
             }    
@@ -223,7 +225,8 @@ fn main() -> Result<(), mlua::Error> {
 
             let success = send_output(output);
             if success {
-                green_ln!("Removed {:?}...", flapak_packages_to_remove);
+                green!("Removed: ");
+                white_ln_bold!("{:?}...", flapak_packages_to_remove);
             }
         
             let mut output = Command::new("flatpak");
@@ -241,7 +244,8 @@ fn main() -> Result<(), mlua::Error> {
 
     // INSTALLING PACKAGES //
 
-    cyan_ln!("Installing Packages...");
+    cyan!("Starting: ");
+    white_ln_bold!("Installing Packages...");
     white_ln_bold!("Upgrading System...");
     // Upgrade System
     let mut output = Command::new("sudo");
@@ -300,7 +304,8 @@ fn main() -> Result<(), mlua::Error> {
 
                     let success = send_output(output);
                     if success {
-                        green_ln!("Installed {}...", string_str);
+                        green!("Installed: ");
+                        white_ln_bold!("{}...", string_str);
                     }
                 }
             },
@@ -425,7 +430,8 @@ fn main() -> Result<(), mlua::Error> {
 
                     let success = send_output(output);
                     if success {
-                        green_ln!("Installed {}...", string_str);
+                        green!("Installed: ");
+                        white_ln_bold!("{}...", string_str);
                     }
                 }
             },
