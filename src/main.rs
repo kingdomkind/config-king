@@ -442,6 +442,6 @@ fn main() -> Result<(), mlua::Error> {
     }
     white_ln_bold!("Finished installing packages...");
 
-    cyan_ln!("Finished (Completed all tasks)...");
+    magenta_ln!("Finished (Completed all tasks)...");
     Ok(())
 }
