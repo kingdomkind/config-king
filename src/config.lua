@@ -12,14 +12,12 @@ Packages = {
         "rustup",
         "ttf-jetbrains-mono-nerd",
         "flatpak",
-        "neofetch",
-        "gnome",
+        "fastfetch",
     },
 
     Aur = {
         {GlobalInstallLocation = "/home/pika/.config-king/aur/"},
-        --"downgrade",
-        "yay"
+        "downgrade",
     },
 
     Flatpak = {
