@@ -17,6 +17,7 @@ Yellow - Warning (ie. can be recovered from or only prevents one specific thing)
 Red - Critical Error that prevents that overall stage from working properly, needs immediate attention
 Bold White - Expected output that will always occur / Part of an action that is not yet finished
 Cyan - New section
+Magenta - Finished section
 */
 
 // Config Variables
@@ -237,7 +238,8 @@ fn main() -> Result<(), mlua::Error> {
             let _success = send_output(output);
         }
 
-        white_ln_bold!("Finished removing packages...");
+        magenta!("Finished: ");
+        white_ln_bold!("Removed all intended packages");
     } else {
         grey_ln!("Skipping removing packages...");
     }
@@ -247,10 +249,12 @@ fn main() -> Result<(), mlua::Error> {
     cyan!("Starting: ");
     white_ln_bold!("Installing Packages...");
     white_ln_bold!("Upgrading System...");
+    
     // Upgrade System
     let mut output = Command::new("sudo");
     output.arg("pacman");
     output.arg("-Syu");
+    if ASSUME_YES { output.arg("--noconfirm"); }
     send_output(output);
 
     // Installing official packages
@@ -440,8 +444,10 @@ fn main() -> Result<(), mlua::Error> {
 
         }
     }
-    white_ln_bold!("Finished installing packages...");
+    magenta!("Finished: ");
+    white_ln_bold!("Installed all intended packages");
 
-    magenta_ln!("Finished (Completed all tasks)...");
+    magenta!("Finished: ");
+    white_ln_bold!("Completed all tasks");
     Ok(())
 }
