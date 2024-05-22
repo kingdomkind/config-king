@@ -21,7 +21,7 @@ Cyan - New section
 
 // Config Variables
 const SEE_STDOUT : bool = false;
-const SEE_STDERR : bool = false;
+const SEE_STDERR : bool = true;
 const ASSUME_YES : bool = true;
 const PACKAGE_REMOVE_WARN_LIMIT : u32 = 5;
 const DEFAULT_YES : bool = true;
@@ -169,7 +169,8 @@ fn main() -> Result<(), mlua::Error> {
     packages_to_remove = subtract_lua_vec(packages_to_remove, aur_table.clone());
     let flapak_packages_to_remove: Vec<String> = subtract_lua_vec(flatpak_packages.iter().map(|x| x.to_string()).collect(), flatpak_table.clone());
 
-    cyan_ln!("Beginning to remove packages...");
+    cyan!("Starting: ")
+    println!("Removing packages...");
 
     // Checking if we should actually remove the packages, if above the regular warn limit
     let mut should_remove_package : bool = true;
