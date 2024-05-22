@@ -169,7 +169,7 @@ fn main() -> Result<(), mlua::Error> {
     packages_to_remove = subtract_lua_vec(packages_to_remove, aur_table.clone());
     let flapak_packages_to_remove: Vec<String> = subtract_lua_vec(flatpak_packages.iter().map(|x| x.to_string()).collect(), flatpak_table.clone());
 
-    cyan!("Starting: ")
+    cyan!("Starting: ");
     println!("Removing packages...");
 
     // Checking if we should actually remove the packages, if above the regular warn limit
