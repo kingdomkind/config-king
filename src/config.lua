@@ -23,3 +23,7 @@ Packages = {
     Flatpak = {
     },
 }
+
+Symlinks = {
+    
+}
