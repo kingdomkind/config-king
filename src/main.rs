@@ -1,5 +1,5 @@
 use mlua::prelude::*;
-use std::{env, fs, io, process::{exit, Command}};
+use std::{env, fs::{self, File, OpenOptions}, io, path::Path, process::{exit, Command}};
 use colour::*;
 
 /*
@@ -449,6 +449,26 @@ fn main() -> Result<(), mlua::Error> {
     }
     magenta!("Finished: ");
     white_ln_bold!("Installed all intended packages");
+
+    // Creating Symlinks
+    cyan!("Starting: ");
+    white_ln_bold!("Generating Symlinks");
+
+    let packages_table: mlua::Table = globals.get("Symlinks")?;
+
+    // Read cached save file
+    let save_exist = Path::new("/home/pika/.config-king/save.king").exists();
+
+    if save_exist {
+        let mut file = OpenOptions::new()
+        .read(true)
+        .write(true)
+        .open("/home/pika/.config-king/save.king")?;
+    } else {
+        yellow!("Warning: ");
+        white_ln_bold!("No previous run save file detected, expected behaviour for first run, generating new file");
+        let _ = File::create("/home/pika/.config-king/save.king");
+    }
 
     magenta!("Finished: ");
     white_ln_bold!("Completed all tasks");
