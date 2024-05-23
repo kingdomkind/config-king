@@ -20,6 +20,6 @@ Packages = {
         "downgrade",
     },
 
-    --Flatpak = {
-    --},
+    Flatpak = {
+    },
 }
