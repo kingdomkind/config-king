@@ -457,7 +457,6 @@ fn main() -> Result<(), mlua::Error> {
     let save_exist = Path::new("/home/pika/.config-king/save.king").exists();
     let mut symlink_vec: Vec<String> = Vec::new();
 
-
     if save_exist {
         let mut file = OpenOptions::new()
         .read(true)
@@ -586,6 +585,9 @@ fn main() -> Result<(), mlua::Error> {
 
     println!("{}", symlink_msg);
     let _ = file.write_all(symlink_msg.as_bytes());
+
+    magenta!("Finished: ");
+    white_ln_bold!("Updated Save File");
 
     magenta!("Finished: ");
     white_ln_bold!("Completed all tasks");
