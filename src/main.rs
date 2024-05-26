@@ -1,5 +1,5 @@
 use mlua::prelude::*;
-use std::{env, fs::{self, File, OpenOptions}, io::{self, Read}, path::Path, process::{exit, Command}};
+use std::{env, fs::{self, remove_file, File, Metadata, OpenOptions}, io::{self, Read, Write}, ops::Index, os::unix::fs::symlink, path::{self, Path}, process::{exit, Command}};
 use colour::*;
 
 /*
@@ -450,32 +450,18 @@ fn main() -> Result<(), mlua::Error> {
     magenta!("Finished: ");
     white_ln_bold!("Installed all intended packages");
 
-    // Creating Symlinks
-    cyan!("Starting: ");
-    white_ln_bold!("Generating Symlinks");
-    let symlinks_table: mlua::Table = globals.get("Symlinks")?;
-
-    for pair in symlinks_table.pairs::<mlua::Value, mlua::Value>() {
-        let (_key, value) = pair?;
-        match value {
-
-            mlua::Value::String(string) => {
-
-                let string_str = string.to_str().unwrap();
-            },
-
-            _ => (),
-
-        }
-    }
-
     // Read cached save file
+    cyan!("Starting: ");
+    white_ln_bold!("Reading previous save file");
+
     let save_exist = Path::new("/home/pika/.config-king/save.king").exists();
+    let mut symlink_vec: Vec<String> = Vec::new();
+
 
     if save_exist {
         let mut file = OpenOptions::new()
         .read(true)
-        .write(true)
+        //.write(true)
         .open("/home/pika/.config-king/save.king")?;
 
         let mut content = Vec::new();
@@ -506,8 +492,8 @@ fn main() -> Result<(), mlua::Error> {
                     .collect();
 
                     for raw_path in sub_elements {
-                        let path =  &raw_path[1..raw_path.len()-1];
-                        println!("{}", path);
+                        let path =  &raw_path[1..raw_path.len()-1]; // remove speech marks
+                        symlink_vec.push(path.to_string());
                     }
                 },
                 _ => {
@@ -522,6 +508,84 @@ fn main() -> Result<(), mlua::Error> {
         white_ln_bold!("No previous run save file detected, expected behaviour for first run, generating new file");
         let _ = File::create("/home/pika/.config-king/save.king");
     }
+
+    magenta!("Finished: ");
+    white_ln_bold!("Read save file");
+
+    // Creating Symlinks
+    cyan!("Starting: ");
+    white_ln_bold!("Generating Symlinks");
+
+    let symlinks_table: mlua::Table = globals.get("Symlinks")?;
+    let mut symlink_msg = String::from("symlinks=[");
+
+    for pair in symlinks_table.pairs::<mlua::Value, mlua::Value>() {
+        let (key, value) = pair?;
+        match value {
+
+            mlua::Value::String(string) => {
+
+                let string_str = string.to_str().unwrap();
+                let source_dir = key.to_string().unwrap();
+                let target_dir = string_str.to_string();
+                let symlink_dir = source_dir.clone() + "=" + &target_dir;
+                let metadata = fs::symlink_metadata(&source_dir);
+                
+                if metadata.unwrap().file_type().is_symlink() {
+                    println!("already exits");
+                } else {
+
+                    let res = symlink(source_dir.clone(), target_dir.clone());
+
+                    if res.is_err() {
+                        red!("ERROR: ");
+                        white_ln_bold!("Failed to create symlink: {}", source_dir);
+                    } else {
+                        green!("Created: ");
+                        white_ln_bold!("Symlink at {} which targets {}", source_dir, target_dir);
+                        symlink_msg.push_str("\"");
+                        symlink_msg.push_str(&symlink_dir);
+                        symlink_msg.push_str("\","); 
+                    }
+                }
+
+                if symlink_vec.contains(&symlink_dir) {
+                    let index = symlink_vec.iter().position(|r| *r == symlink_dir).unwrap();
+                    symlink_vec.remove(index);
+                    println!("Removed from list");
+                }
+            },
+
+            _ => (),
+
+        }
+    }
+    
+    symlink_msg.push_str("];");
+
+    for value in symlink_vec {
+        let locations: Vec<String> = value
+        .split('=')
+        .map(|s| s.to_string())
+        .collect();
+
+        if Path::new(&locations[0]).exists() {
+            let _ = fs::remove_file(Path::new(&locations[0]));
+        }
+    }
+
+    magenta!("Finished: ");
+    white_ln_bold!("Managed all Symlinks");
+
+    cyan!("Starting: ");
+    white_ln_bold!("Updating Save File");
+
+    let mut file = OpenOptions::new()
+    .read(true)
+    .open("/home/pika/.config-king/save.king")?;
+
+    println!("{}", symlink_msg);
+    let _ = file.write_all(symlink_msg.as_bytes());
 
     magenta!("Finished: ");
     white_ln_bold!("Completed all tasks");

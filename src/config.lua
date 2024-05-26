@@ -25,5 +25,5 @@ Packages = {
 }
 
 Symlinks = {
-    
+    "/home/pika/test"
 }
