@@ -562,7 +562,10 @@ fn main() -> Result<(), mlua::Error> {
 
         }
     }
-    symlink_msg.remove(symlink_msg.len()-1); // Remove trailing comma
+
+    if symlink_msg.chars().last() != Some('[') {
+        symlink_msg.pop(); // Remove trailing comma, if the list was not empty
+    }
     symlink_msg.push_str("];");
 
     for value in symlink_vec {
