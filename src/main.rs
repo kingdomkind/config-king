@@ -536,15 +536,18 @@ fn main() -> Result<(), mlua::Error> {
 
                     let res = symlink(source_dir.clone(), target_dir.clone());
 
-                    if res.is_err() {
-                        red!("ERROR: ");
-                        white_ln_bold!("Failed to create symlink: {}", source_dir);
-                    } else {
-                        green!("Created: ");
-                        white_ln_bold!("Symlink at {} which targets {}", source_dir, target_dir);
-                        symlink_msg.push_str("\"");
-                        symlink_msg.push_str(&symlink_dir);
-                        symlink_msg.push_str("\","); 
+                    match res {
+                        Err(err)=> {
+                            red!("ERROR: ");
+                            white_ln_bold!("Failed to create symlink: {} | {}", source_dir, err);
+                        },
+                        Ok(()) => {
+                            green!("Created: ");
+                            white_ln_bold!("Symlink at {} which targets {}", source_dir, target_dir);
+                            symlink_msg.push_str("\"");
+                            symlink_msg.push_str(&symlink_dir);
+                            symlink_msg.push_str("\","); 
+                        }
                     }
                 }
 
