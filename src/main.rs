@@ -525,25 +525,25 @@ fn main() -> Result<(), mlua::Error> {
             mlua::Value::String(string) => {
 
                 let string_str = string.to_str().unwrap();
-                let source_dir = key.to_string().unwrap();
-                let target_dir = string_str.to_string();
-                let symlink_dir = source_dir.clone() + "=" + &target_dir;
-                let metadata = fs::symlink_metadata(&source_dir);
+                let original_dir =  string_str.to_string();
+                let link_dir = key.to_string().unwrap();
+                let symlink_dir = original_dir.clone() + "=" + &link_dir;
+                let metadata = fs::symlink_metadata(&original_dir);
                 
                 if metadata.unwrap().file_type().is_symlink() {
                     println!("already exits");
                 } else {
 
-                    let res = symlink(source_dir.clone(), target_dir.clone());
+                    let res = symlink(original_dir.clone(), link_dir.clone());
 
                     match res {
                         Err(err)=> {
                             red!("ERROR: ");
-                            white_ln_bold!("Failed to create symlink from {} to {} | {}", source_dir, target_dir, err);
+                            white_ln_bold!("Failed to create symlink from {} to {} | {}", original_dir, link_dir, err);
                         },
                         Ok(()) => {
                             green!("Created: ");
-                            white_ln_bold!("Symlink at {} which targets {}", source_dir, target_dir);
+                            white_ln_bold!("Symlink at {} which targets {}", link_dir, original_dir);
                             symlink_msg.push_str("\"");
                             symlink_msg.push_str(&symlink_dir);
                             symlink_msg.push_str("\","); 
