@@ -539,7 +539,7 @@ fn main() -> Result<(), mlua::Error> {
                     match res {
                         Err(err)=> {
                             red!("ERROR: ");
-                            white_ln_bold!("Failed to create symlink: {} | {}", source_dir, err);
+                            white_ln_bold!("Failed to create symlink from {} to {} | {}", source_dir, target_dir, err);
                         },
                         Ok(()) => {
                             green!("Created: ");
