@@ -562,7 +562,7 @@ fn main() -> Result<(), mlua::Error> {
 
         }
     }
-    
+    symlink_msg.remove(symlink_msg.len()-1);
     symlink_msg.push_str("];");
 
     for value in symlink_vec {
