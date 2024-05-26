@@ -493,11 +493,11 @@ fn main() -> Result<(), mlua::Error> {
         for value in elements {
             let identifier_bound = value.find('=').unwrap();
             let identifier = &value[..identifier_bound];
-            println!("Substring up to first '=': {}", identifier);
+            //println!("Substring up to first '=': {}", identifier);
 
             match identifier {
                 "symlinks" => {
-                    let remainder = &value[identifier_bound+1..];
+                    let remainder = &value[identifier_bound+2..value.len()-1];
                     println!("{}", remainder);
                 },
                 _ => {
