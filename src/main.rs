@@ -497,8 +497,18 @@ fn main() -> Result<(), mlua::Error> {
 
             match identifier {
                 "symlinks" => {
-                    let remainder = &value[identifier_bound+2..value.len()-1];
+                    let remainder = &value[identifier_bound+2..value.len()-1]; // +2 to slice of the =[ and -1 to slice the ]
                     println!("{}", remainder);
+
+                    let sub_elements: Vec<String> = remainder
+                    .split(',')
+                    .map(|s| s.to_string())
+                    .collect();
+
+                    for raw_path in sub_elements {
+                        let path =  &raw_path[1..raw_path.len()-1];
+                        println!("{}", path);
+                    }
                 },
                 _ => {
                     red!("ERROR: ");
