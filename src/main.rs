@@ -594,7 +594,7 @@ fn main() -> Result<(), mlua::Error> {
     white_ln_bold!("Updating Save File");
 
     let mut file = OpenOptions::new()
-    .read(true)
+    .write(true)
     .open("/home/pika/.config-king/save.king")?;
 
     println!("{}", symlink_msg);
