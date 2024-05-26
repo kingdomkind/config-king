@@ -527,7 +527,7 @@ fn main() -> Result<(), mlua::Error> {
                 let string_str = string.to_str().unwrap();
                 let original_dir =  string_str.to_string();
                 let link_dir = key.to_string().unwrap();
-                let symlink_dir = original_dir.clone() + "=" + &link_dir;
+                let symlink_dir = link_dir.clone() + "=" + &original_dir;
                 let metadata = fs::symlink_metadata(&original_dir);
                 
                 if metadata.unwrap().file_type().is_symlink() {
