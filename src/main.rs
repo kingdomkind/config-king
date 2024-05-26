@@ -483,6 +483,15 @@ fn main() -> Result<(), mlua::Error> {
         let content_str = String::from_utf8_lossy(&content);
         println!("File content: {}", content_str);
 
+        let elements: Vec<String> = content_str
+        .split(';') // Use a character here
+        .map(|s| s.trim_end_matches('\n').to_string())
+        .collect();
+
+        for value in elements {
+            println!("{}", value);
+        }
+
     } else {
         yellow!("Warning: ");
         white_ln_bold!("No previous run save file detected, expected behaviour for first run, generating new file");
