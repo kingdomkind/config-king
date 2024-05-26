@@ -486,6 +486,8 @@ fn main() -> Result<(), mlua::Error> {
         .map(|s| s.trim_end_matches('\n').to_string())
         .collect();
 
+        println!("{}", elements.len());
+
         for value in elements {
             let identifier_bound = value.find('=').unwrap();
             let substring = &value[..identifier_bound];
