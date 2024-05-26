@@ -1,5 +1,5 @@
 use mlua::prelude::*;
-use std::{env, fs::{self, File, OpenOptions}, io, path::Path, process::{exit, Command}};
+use std::{env, fs::{self, File, OpenOptions}, io::{self, Read}, path::Path, process::{exit, Command}};
 use colour::*;
 
 /*
@@ -453,8 +453,21 @@ fn main() -> Result<(), mlua::Error> {
     // Creating Symlinks
     cyan!("Starting: ");
     white_ln_bold!("Generating Symlinks");
+    let symlinks_table: mlua::Table = globals.get("Symlinks")?;
 
-    let packages_table: mlua::Table = globals.get("Symlinks")?;
+    for pair in symlinks_table.pairs::<mlua::Value, mlua::Value>() {
+        let (_key, value) = pair?;
+        match value {
+
+            mlua::Value::String(string) => {
+
+                let string_str = string.to_str().unwrap();
+            },
+
+            _ => (),
+
+        }
+    }
 
     // Read cached save file
     let save_exist = Path::new("/home/pika/.config-king/save.king").exists();
@@ -464,6 +477,12 @@ fn main() -> Result<(), mlua::Error> {
         .read(true)
         .write(true)
         .open("/home/pika/.config-king/save.king")?;
+
+        let mut content = Vec::new();
+        file.read_to_end(&mut content)?;
+        let content_str = String::from_utf8_lossy(&content);
+        println!("File content: {}", content_str);
+
     } else {
         yellow!("Warning: ");
         white_ln_bold!("No previous run save file detected, expected behaviour for first run, generating new file");
