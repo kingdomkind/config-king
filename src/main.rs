@@ -572,7 +572,11 @@ fn main() -> Result<(), mlua::Error> {
         .collect();
 
         if Path::new(&locations[0]).exists() {
-            let res = fs::remove_file(Path::new(&locations[0]));
+            let res = if Path::new(&locations[0]).is_dir() {
+                fs::remove_dir_all(&locations[0])
+            } else {
+                fs::remove_file(&locations[0])
+            };
 
             match res {
                 Err(err)=> {
