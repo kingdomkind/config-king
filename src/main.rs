@@ -497,7 +497,7 @@ fn main() -> Result<(), mlua::Error> {
 
             match identifier {
                 "symlinks" => {
-                    let remainder = &value[identifier_bound..];
+                    let remainder = &value[identifier_bound+1..];
                     println!("{}", remainder);
                 },
                 _ => {
