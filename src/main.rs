@@ -598,7 +598,18 @@ fn main() -> Result<(), mlua::Error> {
     .open("/home/pika/.config-king/save.king")?;
 
     println!("{}", symlink_msg);
-    let _ = file.write_all(symlink_msg.as_bytes());
+    let res = file.write_all(symlink_msg.as_bytes());
+
+    match res {
+        Err(err)=> {
+            red!("ERROR: ");
+            white_ln_bold!("Failed to update save.king file | {}", err);
+        },
+        Ok(()) => {
+            green!("Updated: ");
+            white_ln_bold!("save.king file with new cached information");
+        }
+    }
 
     magenta!("Finished: ");
     white_ln_bold!("Updated Save File");
