@@ -482,8 +482,9 @@ fn main() -> Result<(), mlua::Error> {
         file.read_to_end(&mut content)?;
         let content_str = String::from_utf8_lossy(&content);
         let elements: Vec<String> = content_str
-        .split(';') // Use a character here
+        .split(';')
         .map(|s| s.trim_end_matches('\n').to_string())
+        .filter(|s| !s.is_empty()) // Filter out empty strings
         .collect();
 
         println!("{}", elements.len());
