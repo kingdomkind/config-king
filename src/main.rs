@@ -1,5 +1,5 @@
 use mlua::prelude::*;
-use std::{env, fs::{self, remove_file, File, Metadata, OpenOptions}, io::{self, Read, Write}, ops::Index, os::unix::fs::symlink, path::{self, Path}, process::{exit, Command}};
+use std::{env, fs::{self, remove_file, File, Metadata, OpenOptions}, io::{self, Read, Write}, ops::Index, os::unix::fs::symlink, panic::Location, path::{self, Path}, process::{exit, Command}};
 use colour::*;
 
 /*
@@ -572,7 +572,18 @@ fn main() -> Result<(), mlua::Error> {
         .collect();
 
         if Path::new(&locations[0]).exists() {
-            let _ = fs::remove_file(Path::new(&locations[0]));
+            let res = fs::remove_file(Path::new(&locations[0]));
+
+            match res {
+                Err(err)=> {
+                    red!("ERROR: ");
+                    white_ln_bold!("Failed to delete symlink at {} | {}", locations[0], err);
+                },
+                Ok(()) => {
+                    green!("Removed: ");
+                    white_ln_bold!("Symlink at {} which targets {}", locations[0], locations[1]);
+                }
+            }
         }
     }
 
