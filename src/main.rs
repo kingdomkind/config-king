@@ -481,15 +481,15 @@ fn main() -> Result<(), mlua::Error> {
         let mut content = Vec::new();
         file.read_to_end(&mut content)?;
         let content_str = String::from_utf8_lossy(&content);
-        println!("File content: {}", content_str);
-
         let elements: Vec<String> = content_str
         .split(';') // Use a character here
         .map(|s| s.trim_end_matches('\n').to_string())
         .collect();
 
         for value in elements {
-            println!("{}", value);
+            let identifier_bound = value.find('=').unwrap();
+            let substring = &value[..identifier_bound];
+            println!("Substring up to first '=': {}", substring);
         }
 
     } else {
