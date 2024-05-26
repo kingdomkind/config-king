@@ -481,19 +481,30 @@ fn main() -> Result<(), mlua::Error> {
         let mut content = Vec::new();
         file.read_to_end(&mut content)?;
         let content_str = String::from_utf8_lossy(&content);
+
         let elements: Vec<String> = content_str
         .split(';')
         .map(|s| s.trim_end_matches('\n').to_string())
         .filter(|s| !s.is_empty()) // Filter out empty strings
         .collect();
 
-        println!("{}", elements.len());
+        //println!("{}", elements.len());
 
         for value in elements {
-            println!("{}after", value);
             let identifier_bound = value.find('=').unwrap();
-            let substring = &value[..identifier_bound];
-            println!("Substring up to first '=': {}", substring);
+            let identifier = &value[..identifier_bound];
+            println!("Substring up to first '=': {}", identifier);
+
+            match identifier {
+                "symlinks" => {
+                    let remainder = &value[identifier_bound..];
+                    println!("{}", remainder);
+                },
+                _ => {
+                    red!("ERROR: ");
+                    white_ln_bold!("Identifier Name: {} was not recognised in the config.king file!", identifier);
+                },
+            }
         }
 
     } else {
