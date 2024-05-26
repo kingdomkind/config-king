@@ -489,7 +489,7 @@ fn main() -> Result<(), mlua::Error> {
         println!("{}", elements.len());
 
         for value in elements {
-            println!("{}", value);
+            println!("{}after", value);
             let identifier_bound = value.find('=').unwrap();
             let substring = &value[..identifier_bound];
             println!("Substring up to first '=': {}", substring);
