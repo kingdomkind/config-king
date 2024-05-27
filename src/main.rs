@@ -31,14 +31,14 @@ fn remove_path(path : String) {
     if Path::new(&path).exists() {
         let mut ret: Option<Result<(), std::io::Error>> = None;
         if Path::new(&path).is_dir() {
-            print!("Warning: ");
+            yellow!("Warning: ");
             white_ln_bold!("Are you sure you would like to remove the directory at {} [y/n]", path);
             let confirm = get_confirmation();
             if confirm {
                 ret = Some(fs::remove_dir_all(&path));
             }
         } else {
-            print!("Warning: ");
+            yellow!("Warning: ");
             white_ln_bold!("Are you sure you would like to remove the file at {} [y/n]", path);
             let confirm = get_confirmation();
             if confirm {
