@@ -605,6 +605,10 @@ fn main() -> Result<(), mlua::Error> {
         println!("Index: {}, Value: {}", index, value);
     }
 
+    for value in symlink_vec.clone() {
+        println!("Iter: {}", value);
+    }
+
     // Deleting previous symlinks
     for value in symlink_vec {
         let locations: Vec<String> = value
