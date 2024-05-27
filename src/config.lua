@@ -24,8 +24,9 @@ Packages = {
 }
 
 Symlinks = {
-    ["/home/pika/test2"] = "/home/pika/test2",
-    --["/home/pika/test3"] = "/home/pika/config-king",
+    ["/home/pika/test2"] = "/home/pika/config-king",
+    ["/home/pika/test3"] = "/home/pika/config-king",
+    ["/home/pika/test4"] = "/home/pika/test2",
 }
 
 InstallLocations = {
