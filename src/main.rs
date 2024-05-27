@@ -505,7 +505,18 @@ fn main() -> Result<(), mlua::Error> {
     } else {
         yellow!("Warning: ");
         white_ln_bold!("No previous run save file detected, expected behaviour for first run, generating new file");
-        let _ = File::create("/home/pika/.config-king/save.king");
+        let res = File::create("/home/pika/.config-king/save.king");
+
+        match res {
+            Err(err)=> {
+                red!("ERROR: ");
+                white_ln_bold!("Failed to create save file | {}", err);
+            },
+            _file => {
+                green!("Created: ");
+                white_ln_bold!("config.king save file");
+            }
+        }
     }
 
     magenta!("Finished: ");
