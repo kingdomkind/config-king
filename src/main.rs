@@ -584,36 +584,53 @@ fn main() -> Result<(), mlua::Error> {
     cyan!("Starting: ");
     white_ln_bold!("Regenerating Symlinks");
 
-    // Deleting previous symlinks -- Current method is to delete all symlinks then to regenerate the ones that are needed as it's simpler 
-    // (code length & complexity is about halved) although this behaviour may change in future if it has unforseen issues.
+    let symlinks_table: mlua::Table = globals.get("Symlinks")?;
+    let mut new_symlinks: HashMap<String, String> = HashMap::new();
+
+    // Get Current symlinks as rust hash map
+    for pair in symlinks_table.clone().pairs::<mlua::Value, mlua::Value>() {
+        let (key, value) = pair?;
+        match &value {
+
+            mlua::Value::String(_string) => {
+                new_symlinks.insert(key.to_string().unwrap(), value.to_string().unwrap());
+            },
+
+            _ => (),
+
+        }
+    }
+
+    // Deleting previous symlinks
     for value in symlink_vec {
         let locations: Vec<String> = value
         .split('=')
         .map(|s| s.to_string())
         .collect();
 
-
-        // Check if the symlink already exists, and if so break out of this loop
-        let metadata = fs::symlink_metadata(&locations[0])?;
-        if metadata.file_type().is_symlink() {
-            match fs::read_link(&locations[0]) {
-                Ok(target_path) => {
-                    if target_path == PathBuf::from(&locations[1]) {
-                        break;
+        // Check if the symlink already exists, is valid, and if so break out of this loop
+        if new_symlinks.contains_key(&locations[0]) {
+            let metadata = fs::symlink_metadata(&locations[0])?;
+            if metadata.file_type().is_symlink() {
+                match fs::read_link(&locations[0]) {
+                    Ok(target_path) => {
+                        if target_path == PathBuf::from(&locations[1]) {
+                            break;
+                        }
                     }
-                }
-                Err(err) => {
-                    red!("ERROR: ");
-                    white_ln_bold!("Unable to read what the symlink points to | {}", err);
+                    Err(err) => {
+                        red!("ERROR: ");
+                        white_ln_bold!("Unable to read what the symlink points to | {}", err);
+                    }
                 }
             }
         }
 
+        // Invalid symlink, banish it
         remove_path(locations[0].to_string());
     }
 
     // Creating new symlinks
-    let symlinks_table: mlua::Table = globals.get("Symlinks")?;
     let mut symlink_msg = String::from("symlinks=[");
 
     for pair in symlinks_table.pairs::<mlua::Value, mlua::Value>() {
