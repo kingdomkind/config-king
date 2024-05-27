@@ -617,18 +617,10 @@ fn main() -> Result<(), mlua::Error> {
             if new_symlinks.contains_key(&locations[0]) {
                 let metadata = fs::symlink_metadata(&locations[0])?;
                 if metadata.file_type().is_symlink() {
-                    match fs::read_link(&locations[0]) {
-                        Ok(target_path) => {
-                            if target_path == PathBuf::from(&locations[1]) {
-                                break;
-                            } else {
-                                println!("We need to banish it");
-                            }
-                        }
-                        Err(err) => {
-                            red!("ERROR: ");
-                            white_ln_bold!("Unable to read what the symlink points to | {}", err);
-                        }
+                    if new_symlinks[&locations[0]] == locations[1] {
+                        break;
+                    } else {
+                        println!("Get rid of this fool");
                     }
                 }
             }
@@ -664,7 +656,7 @@ fn main() -> Result<(), mlua::Error> {
                     match res {
                         Err(err)=> {
                             red!("ERROR: ");
-                            white_ln_bold!("Failed to create symlink from {} to {} | {}", original_dir, link_dir, err);
+                            white_ln_bold!("Failed to create symlink from {} to {} | {}", link_dir, original_dir, err);
                             break;
                         },
                         Ok(()) => {
