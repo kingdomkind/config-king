@@ -636,6 +636,7 @@ fn main() -> Result<(), mlua::Error> {
         remove_path(locations[0].to_string());
     }
 
+    println!("Next");
     // Creating new symlinks
     let mut symlink_msg = String::from("symlinks=[");
 
