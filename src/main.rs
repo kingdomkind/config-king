@@ -1,5 +1,5 @@
 use mlua::prelude::*;
-use std::{collections::HashMap, env, fs::{self, File, OpenOptions}, io::{self, Read, Write}, ops::Index, os::unix::fs::symlink, path::{Path, PathBuf}, process::{exit, Command}};
+use std::{collections::HashMap, env, fs::{self, File, OpenOptions}, io::{self, Read, Write}, ops::Index, os::unix::fs::symlink, panic::Location, path::{Path, PathBuf}, process::{exit, Command}};
 use colour::*;
 
 /*
@@ -612,12 +612,18 @@ fn main() -> Result<(), mlua::Error> {
         .map(|s| s.to_string())
         .collect();
 
+        println!("Location0: {}, Location1: {}", &locations[0], &locations[1]);
+
         // Check if the symlink already exists, is valid, and if so break out of this loop
         if Path::new(&locations[0]).exists() {
+            println!("Path Exists");
             if new_symlinks.contains_key(&locations[0]) {
+                println!("We still want it (Key still exists)");
                 let metadata = fs::symlink_metadata(&locations[0])?;
                 if metadata.file_type().is_symlink() {
+                    println!("It's a symlink");
                     if new_symlinks[&locations[0]] == locations[1] {
+                        println!("Bingo, we keep it");
                         break;
                     } else {
                         println!("Get rid of this fool");
