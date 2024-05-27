@@ -250,7 +250,7 @@ fn main() -> Result<(), mlua::Error> {
         let file_name = entry?.file_name().into_string().unwrap();
         entry_names.push(file_name);
     }
-    let aur_packages_to_remove = subtract_lua_vec(entry_names, aur_table);
+    let aur_packages_to_remove = subtract_lua_vec(entry_names, aur_table.clone());
 
     for entry in aur_packages_to_remove {
         remove_path(install_locations["Aur"].clone() + "/" + &entry)
