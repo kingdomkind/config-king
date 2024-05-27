@@ -656,11 +656,18 @@ fn main() -> Result<(), mlua::Error> {
                         Ok(()) => {
                             green!("Created: ");
                             white_ln_bold!("Symlink at {} which targets {}", link_dir, original_dir);
+
+                            // Update Msg
                             symlink_msg.push_str("\"");
                             symlink_msg.push_str(&symlink_dir);
                             symlink_msg.push_str("\","); 
                         }
                     }
+                } else {
+                    // Update Msg - duplicated code - TODO
+                    symlink_msg.push_str("\"");
+                    symlink_msg.push_str(&symlink_dir);
+                    symlink_msg.push_str("\","); 
                 }
             },
 
