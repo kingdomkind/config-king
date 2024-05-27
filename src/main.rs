@@ -1,5 +1,5 @@
 use mlua::prelude::*;
-use std::{collections::HashMap, env, fs::{self, File, OpenOptions}, io::{self, Read, Write}, os::unix::fs::symlink, path::{Path, PathBuf}, process::{exit, Command}};
+use std::{collections::HashMap, env, fs::{self, File, OpenOptions}, io::{self, Read, Write}, ops::Index, os::unix::fs::symlink, path::{Path, PathBuf}, process::{exit, Command}};
 use colour::*;
 
 /*
@@ -599,6 +599,10 @@ fn main() -> Result<(), mlua::Error> {
             _ => (),
 
         }
+    }
+
+    for (index, value) in &new_symlinks {
+        println!("Index: {}, Value: {}", index, value);
     }
 
     // Deleting previous symlinks
