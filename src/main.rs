@@ -1,5 +1,5 @@
 use mlua::prelude::*;
-use std::{collections::HashMap, env, fs::{self, File, OpenOptions}, io::{self, Read, Write}, os::unix::fs::symlink, path::Path, process::{exit, Command}};
+use std::{collections::HashMap, env, fs::{self, File, OpenOptions}, io::{self, Read, Write}, os::unix::fs::symlink, path::{Path, PathBuf}, process::{exit, Command}};
 use colour::*;
 
 /*
@@ -592,6 +592,23 @@ fn main() -> Result<(), mlua::Error> {
         .map(|s| s.to_string())
         .collect();
 
+
+        // Check if the symlink already exists, and if so break out of this loop
+        let metadata = fs::symlink_metadata(&locations[0])?;
+        if metadata.file_type().is_symlink() {
+            match fs::read_link(&locations[0]) {
+                Ok(target_path) => {
+                    if target_path == PathBuf::from(&locations[1]) {
+                        break;
+                    }
+                }
+                Err(err) => {
+                    red!("ERROR: ");
+                    white_ln_bold!("Unable to read what the symlink points to | {}", err);
+                }
+            }
+        }
+
         remove_path(locations[0].to_string());
     }
 
@@ -610,19 +627,22 @@ fn main() -> Result<(), mlua::Error> {
                 let link_dir = key.to_string().unwrap();
                 let symlink_dir = link_dir.clone() + "=" + &original_dir;
 
-                let res = symlink(original_dir.clone(), link_dir.clone());
+                let metadata = fs::symlink_metadata(&link_dir)?;
+                if !metadata.file_type().is_symlink() { // Only create the symlink if there's not already one there, we confirmed it was valid in the removal process
+                    let res = symlink(original_dir.clone(), link_dir.clone());
 
-                match res {
-                    Err(err)=> {
-                        red!("ERROR: ");
-                        white_ln_bold!("Failed to create symlink from {} to {} | {}", original_dir, link_dir, err);
-                    },
-                    Ok(()) => {
-                        green!("Created: ");
-                        white_ln_bold!("Symlink at {} which targets {}", link_dir, original_dir);
-                        symlink_msg.push_str("\"");
-                        symlink_msg.push_str(&symlink_dir);
-                        symlink_msg.push_str("\","); 
+                    match res {
+                        Err(err)=> {
+                            red!("ERROR: ");
+                            white_ln_bold!("Failed to create symlink from {} to {} | {}", original_dir, link_dir, err);
+                        },
+                        Ok(()) => {
+                            green!("Created: ");
+                            white_ln_bold!("Symlink at {} which targets {}", link_dir, original_dir);
+                            symlink_msg.push_str("\"");
+                            symlink_msg.push_str(&symlink_dir);
+                            symlink_msg.push_str("\","); 
+                        }
                     }
                 }
             },
