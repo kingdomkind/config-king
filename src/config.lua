@@ -28,3 +28,8 @@ Symlinks = {
     --["/home/pika/test2"] = "/home/pika/test",
     ["/home/pika/test3"] = "/home/pika/test"
 }
+
+InstallLocations = {
+    ["Save"] = "/home/pika/.config-king/save.king",
+    ["Aur"] = "/home/pika/.config-king/aur/"
+}

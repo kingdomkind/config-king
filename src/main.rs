@@ -1,10 +1,10 @@
 use mlua::prelude::*;
-use std::{env, fs::{self, File, OpenOptions}, io::{self, Read, Write}, os::unix::fs::symlink, path::Path, process::{exit, Command}};
+use std::{collections::HashMap, env, fs::{self, File, OpenOptions}, io::{self, Read, Write}, os::unix::fs::symlink, path::Path, process::{exit, Command}};
 use colour::*;
 
 /*
 BIG TODOS:
-    => Testing Symlinks
+    => Check if symlink already exists before removing it & re-creating it
 */
 
 /*
@@ -166,6 +166,32 @@ fn main() -> Result<(), mlua::Error> {
     let globals = lua.globals();
     lua.load(&lua_script).exec()?;
 
+    // READING INSTALL LOCATIONS
+    let mut install_locations : HashMap<String, String> = HashMap::new();
+    let install_table: mlua::Table = globals.get("InstallLocations")?;
+
+    for pair in install_table.pairs::<mlua::Value, mlua::Value>() {
+        let (key, value) = pair?;
+        match &value {
+
+            mlua::Value::String(_string) => {
+                install_locations.insert(key.to_string().unwrap(), value.to_string().unwrap());
+            },
+
+            _ => {
+                red!("ERROR: ");
+                white_ln_bold!("Unerecognised value in install locations table, key {:?}, value {:?}", key, value);
+            },
+
+        }
+    }
+
+
+    // PACKAGES START
+
+    cyan!("Starting: ");
+    white_ln_bold!("Removing packages");
+
     // Get currently installed packages -- this one needs to use .output to get the stdout.
     let output = Command::new("pacman")
     .arg("-Qeq")
@@ -199,16 +225,12 @@ fn main() -> Result<(), mlua::Error> {
     let mut flatpak_packages : Vec<&str> = flatpak_packages.lines().collect();
     flatpak_packages.remove(0); // Remove the first value as it's the header "APPLICATION ID"
 
-
     // REMOVING PACKAGES //
 
     // Getting packages to remove
     let mut packages_to_remove = subtract_lua_vec(packages.iter().map(|x| x.to_string()).collect(), official_table.clone());
     packages_to_remove = subtract_lua_vec(packages_to_remove, aur_table.clone());
     let flapak_packages_to_remove: Vec<String> = subtract_lua_vec(flatpak_packages.iter().map(|x| x.to_string()).collect(), flatpak_table.clone());
-
-    cyan!("Starting: ");
-    white_ln_bold!("Removing packages");
 
     // Checking if we should actually remove the packages, if above the regular warn limit
     let mut should_remove_package : bool = true;
