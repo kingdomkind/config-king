@@ -16,7 +16,7 @@ Packages = {
     },
 
     Aur = {
-        --"downgrade",
+        "downgrade",
     },
 
     Flatpak = {
@@ -24,8 +24,8 @@ Packages = {
 }
 
 Symlinks = {
-    --["/home/pika/test2"] = "/home/pika/test",
-    --["/home/pika/test3"] = "/home/pika/test"
+    ["/home/pika/test2"] = "/home/pika/test",
+    ["/home/pika/test3"] = "/home/pika/test"
 }
 
 InstallLocations = {
