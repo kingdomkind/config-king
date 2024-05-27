@@ -1,10 +1,10 @@
 use mlua::prelude::*;
-use std::{env, fs::{self, remove_file, File, Metadata, OpenOptions}, io::{self, Read, Write}, ops::Index, os::unix::fs::symlink, panic::Location, path::{self, Path, PathBuf}, process::{exit, Command}};
+use std::{env, fs::{self, File, OpenOptions}, io::{self, Read, Write}, os::unix::fs::symlink, path::Path, process::{exit, Command}};
 use colour::*;
 
 /*
 BIG TODOS:
-    => Symlinks
+    => Testing Symlinks
 */
 
 /*
@@ -558,8 +558,20 @@ fn main() -> Result<(), mlua::Error> {
 
     // Creating Symlinks
     cyan!("Starting: ");
-    white_ln_bold!("Generating Symlinks");
+    white_ln_bold!("Regenerating Symlinks");
 
+    // Deleting previous symlinks -- Current method is to delete all symlinks then to regenerate the ones that are needed as it's simpler 
+    // (code length & complexity is about halved) although this behaviour may change in future if it has unforseen issues.
+    for value in symlink_vec {
+        let locations: Vec<String> = value
+        .split('=')
+        .map(|s| s.to_string())
+        .collect();
+
+        remove_path(locations[0].to_string());
+    }
+
+    // Creating new symlinks
     let symlinks_table: mlua::Table = globals.get("Symlinks")?;
     let mut symlink_msg = String::from("symlinks=[");
 
@@ -573,53 +585,21 @@ fn main() -> Result<(), mlua::Error> {
                 let original_dir =  string_str.to_string();
                 let link_dir = key.to_string().unwrap();
                 let symlink_dir = link_dir.clone() + "=" + &original_dir;
-                let metadata = fs::symlink_metadata(&original_dir);
-                let mut already_exists = true;
 
-                if !metadata.unwrap().file_type().is_symlink() { // Check if the path is a symlinks
-                    already_exists = false;
-                }
+                let res = symlink(original_dir.clone(), link_dir.clone());
 
-                if already_exists == true { // If it exists, check if it still points to the same target
-                    let symlink_target = fs::read_link(&original_dir);
-                    match symlink_target {
-                        Ok(target) => {
-                            if !(target == PathBuf::from(&link_dir)) {
-                                already_exists = false;
-                            }
-                        },
-
-                        Err(err) => {
-                            println!("Failed to read symlink target: {}", err);
-                        }
+                match res {
+                    Err(err)=> {
+                        red!("ERROR: ");
+                        white_ln_bold!("Failed to create symlink from {} to {} | {}", original_dir, link_dir, err);
+                    },
+                    Ok(()) => {
+                        green!("Created: ");
+                        white_ln_bold!("Symlink at {} which targets {}", link_dir, original_dir);
+                        symlink_msg.push_str("\"");
+                        symlink_msg.push_str(&symlink_dir);
+                        symlink_msg.push_str("\","); 
                     }
-                }
-
-                if metadata.unwrap().file_type().is_symlink() {
-                    println!("already exits"); // NEED TO CHECK IF SYMLINK STILL POINTS TO THE SAME TARGET
-                } else {
-
-                    let res = symlink(original_dir.clone(), link_dir.clone());
-
-                    match res {
-                        Err(err)=> {
-                            red!("ERROR: ");
-                            white_ln_bold!("Failed to create symlink from {} to {} | {}", original_dir, link_dir, err);
-                        },
-                        Ok(()) => {
-                            green!("Created: ");
-                            white_ln_bold!("Symlink at {} which targets {}", link_dir, original_dir);
-                            symlink_msg.push_str("\"");
-                            symlink_msg.push_str(&symlink_dir);
-                            symlink_msg.push_str("\","); 
-                        }
-                    }
-                }
-
-                if symlink_vec.contains(&symlink_dir) {
-                    let index = symlink_vec.iter().position(|r| *r == symlink_dir).unwrap();
-                    symlink_vec.remove(index);
-                    println!("Removed from list");
                 }
             },
 
@@ -634,53 +614,10 @@ fn main() -> Result<(), mlua::Error> {
     }
     symlink_msg.push_str("];");
 
-    // Deleting old symlinks
-    for value in symlink_vec {
-        let locations: Vec<String> = value
-        .split('=')
-        .map(|s| s.to_string())
-        .collect();
-
-        /*
-        if Path::new(&locations[0]).exists() {
-            let mut ret: Option<Result<(), std::io::Error>> = None;
-            if Path::new(&locations[0]).is_dir() {
-                print!("Warning: ");
-                white_ln_bold!("Are you sure you would like to remove the [symlink] directory at {} which points to {} [y/n]", locations[0], locations[1]);
-                let confirm = get_confirmation();
-                if confirm {
-                    ret = Some(fs::remove_dir_all(&locations[0]));
-                }
-            } else {
-                print!("Warning: ");
-                white_ln_bold!("Are you sure you would like to remove the [symlink] file at {} which points to {} [y/n]", locations[0], locations[1]);
-                let confirm = get_confirmation();
-                if confirm {
-                    ret = Some(fs::remove_file(&locations[0]));
-                }
-            };
-
-            if !ret.is_none() {
-                match ret.unwrap() {
-                    Err(err)=> {
-                        red!("ERROR: ");
-                        white_ln_bold!("Failed to delete symlink at {} | {}", locations[0], err);
-                    },
-                    Ok(()) => {
-                        green!("Removed: ");
-                        white_ln_bold!("Symlink at {} which targets {}", locations[0], locations[1]);
-                    }
-                }
-            } else {
-                white_ln_bold!("Skipped removing symlink");
-            }
-        }
-        */
-    }
-
     magenta!("Finished: ");
     white_ln_bold!("Managed all Symlinks");
 
+    // Write updated information to the save file
     cyan!("Starting: ");
     white_ln_bold!("Updating Save File");
 
@@ -705,6 +642,7 @@ fn main() -> Result<(), mlua::Error> {
     magenta!("Finished: ");
     white_ln_bold!("Updated Save File");
 
+    // Everything done, we can exit
     magenta!("Finished: ");
     white_ln_bold!("Completed all tasks");
     Ok(())
