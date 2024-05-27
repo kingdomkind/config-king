@@ -525,7 +525,7 @@ fn main() -> Result<(), mlua::Error> {
                     .collect();
 
                     for raw_path in sub_elements {
-                        let path =  &raw_path[1..raw_path.len()-1]; // remove speech marks
+                        let path: &str =  &raw_path[1..raw_path.len()-1]; // remove speech marks
                         symlink_vec.push(path.to_string());
                     }
                 },
