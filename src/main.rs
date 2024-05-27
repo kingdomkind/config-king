@@ -1,5 +1,5 @@
 use mlua::prelude::*;
-use std::{env, fs::{self, remove_file, File, Metadata, OpenOptions}, io::{self, Read, Write}, ops::Index, os::unix::fs::symlink, panic::Location, path::{self, Path}, process::{exit, Command}};
+use std::{env, fs::{self, remove_file, File, Metadata, OpenOptions}, io::{self, Read, Write}, ops::Index, os::unix::fs::symlink, panic::Location, path::{self, Path, PathBuf}, process::{exit, Command}};
 use colour::*;
 
 /*
@@ -26,6 +26,42 @@ const SEE_STDERR : bool = true;
 const ASSUME_YES : bool = true;
 const PACKAGE_REMOVE_WARN_LIMIT : u32 = 5;
 const DEFAULT_YES : bool = true;
+
+fn remove_path(path : String) {
+    if Path::new(&path).exists() {
+        let mut ret: Option<Result<(), std::io::Error>> = None;
+        if Path::new(&path).is_dir() {
+            print!("Warning: ");
+            white_ln_bold!("Are you sure you would like to remove the directory at {} [y/n]", path);
+            let confirm = get_confirmation();
+            if confirm {
+                ret = Some(fs::remove_dir_all(&path));
+            }
+        } else {
+            print!("Warning: ");
+            white_ln_bold!("Are you sure you would like to remove the file at {} [y/n]", path);
+            let confirm = get_confirmation();
+            if confirm {
+                ret = Some(fs::remove_file(&path));
+            }
+        };
+
+        if !ret.is_none() {
+            match ret.unwrap() {
+                Err(err)=> {
+                    red!("ERROR: ");
+                    white_ln_bold!("Failed to delete path at {} | {}", path, err);
+                },
+                Ok(()) => {
+                    green!("Removed: ");
+                    white_ln_bold!("Removed path at {}", path);
+                }
+            }
+        } else {
+            white_ln_bold!("Skipped removing symlink");
+        }
+    }
+}
 
 fn get_confirmation() -> bool {
     let mut accepted_response = false;
@@ -455,12 +491,13 @@ fn main() -> Result<(), mlua::Error> {
     white_ln_bold!("Reading previous save file");
 
     let save_exist = Path::new("/home/pika/.config-king/save.king").exists();
+
+    // Extracted Content
     let mut symlink_vec: Vec<String> = Vec::new();
 
     if save_exist {
         let mut file = OpenOptions::new()
         .read(true)
-        //.write(true)
         .open("/home/pika/.config-king/save.king")?;
 
         let mut content = Vec::new();
@@ -473,12 +510,9 @@ fn main() -> Result<(), mlua::Error> {
         .filter(|s| !s.is_empty()) // Filter out empty strings
         .collect();
 
-        //println!("{}", elements.len());
-
         for value in elements {
             let identifier_bound = value.find('=').unwrap();
             let identifier = &value[..identifier_bound];
-            //println!("Substring up to first '=': {}", identifier);
 
             match identifier {
                 "symlinks" => {
@@ -540,9 +574,29 @@ fn main() -> Result<(), mlua::Error> {
                 let link_dir = key.to_string().unwrap();
                 let symlink_dir = link_dir.clone() + "=" + &original_dir;
                 let metadata = fs::symlink_metadata(&original_dir);
-                
+                let mut already_exists = true;
+
+                if !metadata.unwrap().file_type().is_symlink() { // Check if the path is a symlinks
+                    already_exists = false;
+                }
+
+                if already_exists == true { // If it exists, check if it still points to the same target
+                    let symlink_target = fs::read_link(&original_dir);
+                    match symlink_target {
+                        Ok(target) => {
+                            if !(target == PathBuf::from(&link_dir)) {
+                                already_exists = false;
+                            }
+                        },
+
+                        Err(err) => {
+                            println!("Failed to read symlink target: {}", err);
+                        }
+                    }
+                }
+
                 if metadata.unwrap().file_type().is_symlink() {
-                    println!("already exits");
+                    println!("already exits"); // NEED TO CHECK IF SYMLINK STILL POINTS TO THE SAME TARGET
                 } else {
 
                     let res = symlink(original_dir.clone(), link_dir.clone());
@@ -574,35 +628,54 @@ fn main() -> Result<(), mlua::Error> {
         }
     }
 
+    // Remove the trailing comma unless the list is empty, then skip
     if symlink_msg.chars().last() != Some('[') {
-        symlink_msg.pop(); // Remove trailing comma, if the list was not empty
+        symlink_msg.pop();
     }
     symlink_msg.push_str("];");
 
+    // Deleting old symlinks
     for value in symlink_vec {
         let locations: Vec<String> = value
         .split('=')
         .map(|s| s.to_string())
         .collect();
 
+        /*
         if Path::new(&locations[0]).exists() {
-            let res = if Path::new(&locations[0]).is_dir() {
-                fs::remove_dir_all(&locations[0])
+            let mut ret: Option<Result<(), std::io::Error>> = None;
+            if Path::new(&locations[0]).is_dir() {
+                print!("Warning: ");
+                white_ln_bold!("Are you sure you would like to remove the [symlink] directory at {} which points to {} [y/n]", locations[0], locations[1]);
+                let confirm = get_confirmation();
+                if confirm {
+                    ret = Some(fs::remove_dir_all(&locations[0]));
+                }
             } else {
-                fs::remove_file(&locations[0])
+                print!("Warning: ");
+                white_ln_bold!("Are you sure you would like to remove the [symlink] file at {} which points to {} [y/n]", locations[0], locations[1]);
+                let confirm = get_confirmation();
+                if confirm {
+                    ret = Some(fs::remove_file(&locations[0]));
+                }
             };
 
-            match res {
-                Err(err)=> {
-                    red!("ERROR: ");
-                    white_ln_bold!("Failed to delete symlink at {} | {}", locations[0], err);
-                },
-                Ok(()) => {
-                    green!("Removed: ");
-                    white_ln_bold!("Symlink at {} which targets {}", locations[0], locations[1]);
+            if !ret.is_none() {
+                match ret.unwrap() {
+                    Err(err)=> {
+                        red!("ERROR: ");
+                        white_ln_bold!("Failed to delete symlink at {} | {}", locations[0], err);
+                    },
+                    Ok(()) => {
+                        green!("Removed: ");
+                        white_ln_bold!("Symlink at {} which targets {}", locations[0], locations[1]);
+                    }
                 }
+            } else {
+                white_ln_bold!("Skipped removing symlink");
             }
         }
+        */
     }
 
     magenta!("Finished: ");
