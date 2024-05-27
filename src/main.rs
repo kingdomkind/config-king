@@ -507,7 +507,7 @@ fn main() -> Result<(), mlua::Error> {
         let elements: Vec<String> = content_str
         .split(';')
         .map(|s| s.trim_end_matches('\n').to_string())
-        .filter(|s| !s.is_empty()) // Filter out empty strings
+        .filter(|s: &String| !s.is_empty()) // Filter out empty strings
         .collect();
 
         for value in elements {
@@ -522,6 +522,8 @@ fn main() -> Result<(), mlua::Error> {
                     let sub_elements: Vec<String> = remainder
                     .split(',')
                     .map(|s| s.to_string())
+                    .filter(|s: &String| !s.is_empty()) // Filter out empty strings
+
                     .collect();
 
                     for raw_path in sub_elements {
