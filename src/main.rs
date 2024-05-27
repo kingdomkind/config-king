@@ -370,7 +370,7 @@ fn main() -> Result<(), mlua::Error> {
                                 yellow_ln!("{}", value);
                             }
                         }
-                        break;
+                        continue;
                     }
 
                     let mut output = Command::new("sudo");
@@ -440,7 +440,7 @@ fn main() -> Result<(), mlua::Error> {
                     // Package isn't installed, need to set it up and install it
                     if !install_locations.contains_key("Aur") {
                         yellow_ln!("Unable to install (AUR) {} as the install location was not specified.", string_str);
-                        break;
+                        continue;
                     }
 
                     white_ln_bold!("Attempting to install (AUR) {}", string_str);
@@ -618,7 +618,7 @@ fn main() -> Result<(), mlua::Error> {
 
         println!("Location0: {}, Location1: {}", &locations[0], &locations[1]);
 
-        // Check if the symlink already exists, is valid, and if so break out of this loop
+        // Check if the symlink already exists, is valid, and if so skip this loop
         if Path::new(&locations[0]).exists() {
             println!("Path Exists");
             if new_symlinks.contains_key(&locations[0]) {
@@ -628,7 +628,7 @@ fn main() -> Result<(), mlua::Error> {
                     println!("It's a symlink");
                     if new_symlinks[&locations[0]] == locations[1] {
                         println!("Bingo, we keep it");
-                        break;
+                        continue;
                     } else {
                         println!("Get rid of this fool");
                     }
@@ -667,7 +667,7 @@ fn main() -> Result<(), mlua::Error> {
                         Err(err)=> {
                             red!("ERROR: ");
                             white_ln_bold!("Failed to create symlink from {} to {} | {}", link_dir, original_dir, err);
-                            break;
+                            continue;
                         },
                         Ok(()) => {
                             green!("Created: ");
