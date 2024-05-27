@@ -621,6 +621,8 @@ fn main() -> Result<(), mlua::Error> {
                         Ok(target_path) => {
                             if target_path == PathBuf::from(&locations[1]) {
                                 break;
+                            } else {
+                                println!("We need to banish it");
                             }
                         }
                         Err(err) => {
