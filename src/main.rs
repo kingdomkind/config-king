@@ -186,9 +186,7 @@ fn main() -> Result<(), mlua::Error> {
         }
     }
 
-
     // PACKAGES START
-
     cyan!("Starting: ");
     white_ln_bold!("Removing packages");
 
@@ -381,22 +379,9 @@ fn main() -> Result<(), mlua::Error> {
     }
 
     // Installing AUR packages
-    let mut global_install_location : String = String::new();
     for pair in aur_table.pairs::<mlua::Value, mlua::Value>() {
         let (_key, val) = pair?;
         match val {
-
-            mlua::Value::Table(table) => {
-                for pair in table.pairs::<mlua::Value, mlua::Value>() {
-                    let (index, value) = pair?; // index gives the var name, value gives the val
-                    let index = index.as_string().unwrap();
-                    let value = value.as_string().unwrap();
-                    
-                    if index == "GlobalInstallLocation" {
-                        global_install_location = value.to_str()?.to_string();
-                    }
-                }
-            },
 
             mlua::Value::String(string) => {
 
@@ -406,7 +391,7 @@ fn main() -> Result<(), mlua::Error> {
 
                     // Package is already installed - check for updates
                     let index = packages.iter().position(|&r| r == string_str);
-                    let directory = global_install_location.clone() + "/" + string_str; // Can lead to double slash instances but doesn't seem to do anything
+                    let directory = install_locations["Aur"].clone() + "/" + string_str; // Can lead to double slash instances but doesn't seem to do anything
                     
                     // Incase the install directory has changed or the folder was manually deleted
                     if !std::path::Path::new(&directory).exists() {
@@ -439,13 +424,13 @@ fn main() -> Result<(), mlua::Error> {
                     
                 } else {
                     // Package isn't installed, need to set it up and install it
-                    if global_install_location.is_empty() {
-                        yellow_ln!("Unable to install (AUR) {} as the install location was not specified. (Try specifying GlobalInstallLocation?)", string_str);
+                    if !install_locations.contains_key("Aur") {
+                        yellow_ln!("Unable to install (AUR) {} as the install location was not specified.", string_str);
                         break;
                     }
 
                     white_ln_bold!("Attempting to install (AUR) {}", string_str);
-                    let directory = global_install_location.clone() + "/" + string_str; // Can lead to double slash instances but doesn't seem to do anything
+                    let directory = install_locations["Aur"].clone() + "/" + string_str; // Can lead to double slash instances but doesn't seem to do anything
                     white_ln_bold!("Creating Directory at: {:?}", directory);
                     fs::create_dir_all::<&str>(directory.as_ref())?;
 
@@ -512,7 +497,7 @@ fn main() -> Result<(), mlua::Error> {
     cyan!("Starting: ");
     white_ln_bold!("Reading previous save file");
 
-    let save_exist = Path::new("/home/pika/.config-king/save.king").exists();
+    let save_exist = Path::new(&install_locations["Save"]).exists();
 
     // Extracted Content
     let mut symlink_vec: Vec<String> = Vec::new();
@@ -520,7 +505,7 @@ fn main() -> Result<(), mlua::Error> {
     if save_exist {
         let mut file = OpenOptions::new()
         .read(true)
-        .open("/home/pika/.config-king/save.king")?;
+        .open(&install_locations["Save"])?;
 
         let mut content = Vec::new();
         file.read_to_end(&mut content)?;
@@ -564,7 +549,7 @@ fn main() -> Result<(), mlua::Error> {
     } else {
         yellow!("Warning: ");
         white_ln_bold!("No previous run save file detected, expected behaviour for first run, generating new file");
-        let res = File::create("/home/pika/.config-king/save.king");
+        let res = File::create(&install_locations["Save"]);
 
         match res {
             Err(err)=> {
