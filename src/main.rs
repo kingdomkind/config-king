@@ -650,32 +650,32 @@ fn main() -> Result<(), mlua::Error> {
                 let original_dir =  string_str.to_string();
                 let link_dir = key.to_string().unwrap();
                 let symlink_dir = link_dir.clone() + "=" + &original_dir;
+                let mut already_exist = false;
 
-                let metadata = fs::symlink_metadata(&link_dir)?;
-                if !metadata.file_type().is_symlink() { // Only create the symlink if there's not already one there, we confirmed it was valid in the removal process
+                if Path::new(&link_dir).exists() {
+                    let metadata = fs::symlink_metadata(&link_dir)?;
+                    already_exist = metadata.file_type().is_symlink();
+                }
+
+                if !already_exist { // Only create the symlink if there's not already one there, we confirmed it was valid in the removal process
                     let res = symlink(original_dir.clone(), link_dir.clone());
-
                     match res {
                         Err(err)=> {
                             red!("ERROR: ");
                             white_ln_bold!("Failed to create symlink from {} to {} | {}", original_dir, link_dir, err);
+                            break;
                         },
                         Ok(()) => {
                             green!("Created: ");
                             white_ln_bold!("Symlink at {} which targets {}", link_dir, original_dir);
-
-                            // Update Msg
-                            symlink_msg.push_str("\"");
-                            symlink_msg.push_str(&symlink_dir);
-                            symlink_msg.push_str("\","); 
                         }
                     }
-                } else {
-                    // Update Msg - duplicated code - TODO
-                    symlink_msg.push_str("\"");
-                    symlink_msg.push_str(&symlink_dir);
-                    symlink_msg.push_str("\","); 
                 }
+
+                // Update Msg
+                symlink_msg.push_str("\"");
+                symlink_msg.push_str(&symlink_dir);
+                symlink_msg.push_str("\","); 
             },
 
             _ => (),
