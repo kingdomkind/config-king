@@ -4,7 +4,7 @@ use colour::*;
 
 /*
 BIG TODOS:
-    => Check if symlink already exists before removing it & re-creating it
+    => Verify Symlinks are stable and reliable, or patch them if needed
 */
 
 /*
