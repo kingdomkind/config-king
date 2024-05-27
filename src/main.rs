@@ -28,6 +28,7 @@ const PACKAGE_REMOVE_WARN_LIMIT : u32 = 5;
 const DEFAULT_YES : bool = true;
 
 fn remove_path(path : String) {
+    println!("Entered path remover");
     if Path::new(&path).exists() {
         let mut ret: Option<Result<(), std::io::Error>> = None;
         if Path::new(&path).is_dir() {
@@ -58,7 +59,7 @@ fn remove_path(path : String) {
                 }
             }
         } else {
-            white_ln_bold!("Skipped removing symlink");
+            white_ln_bold!("Skipped removing path");
         }
     }
 }
