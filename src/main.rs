@@ -613,18 +613,20 @@ fn main() -> Result<(), mlua::Error> {
         .collect();
 
         // Check if the symlink already exists, is valid, and if so break out of this loop
-        if new_symlinks.contains_key(&locations[0]) {
-            let metadata = fs::symlink_metadata(&locations[0])?;
-            if metadata.file_type().is_symlink() {
-                match fs::read_link(&locations[0]) {
-                    Ok(target_path) => {
-                        if target_path == PathBuf::from(&locations[1]) {
-                            break;
+        if Path::new(&locations[0]).exists() {
+            if new_symlinks.contains_key(&locations[0]) {
+                let metadata = fs::symlink_metadata(&locations[0])?;
+                if metadata.file_type().is_symlink() {
+                    match fs::read_link(&locations[0]) {
+                        Ok(target_path) => {
+                            if target_path == PathBuf::from(&locations[1]) {
+                                break;
+                            }
                         }
-                    }
-                    Err(err) => {
-                        red!("ERROR: ");
-                        white_ln_bold!("Unable to read what the symlink points to | {}", err);
+                        Err(err) => {
+                            red!("ERROR: ");
+                            white_ln_bold!("Unable to read what the symlink points to | {}", err);
+                        }
                     }
                 }
             }
