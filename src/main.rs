@@ -243,6 +243,20 @@ fn main() -> Result<(), mlua::Error> {
         should_remove_package = get_confirmation();
     }
 
+    // Clean up AUR directory
+    let entries = fs::read_dir(&install_locations["Aur"])?;
+    let mut entry_names = Vec::new();
+    for entry in entries {
+        let file_name = entry?.file_name().into_string().unwrap();
+        entry_names.push(file_name);
+    }
+    let aur_packages_to_remove = subtract_lua_vec(entry_names, aur_table);
+
+    for entry in aur_packages_to_remove {
+        remove_path(install_locations["Aur"].clone() + "/" + &entry)
+    }
+    
+
     if should_remove_package {
         // Removing regular packages
         if packages_to_remove.len() > 0 {
