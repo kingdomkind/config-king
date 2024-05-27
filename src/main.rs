@@ -517,7 +517,7 @@ fn main() -> Result<(), mlua::Error> {
             match identifier {
                 "symlinks" => {
                     let remainder = &value[identifier_bound+2..value.len()-1]; // +2 to slice of the =[ and -1 to slice the ]
-                    println!("{}", remainder);
+                    println!("Remainder: {}", remainder);
 
                     let sub_elements: Vec<String> = remainder
                     .split(',')
@@ -626,6 +626,7 @@ fn main() -> Result<(), mlua::Error> {
 
     let mut file = OpenOptions::new()
     .write(true)
+    .truncate(true)
     .open("/home/pika/.config-king/save.king")?;
 
     println!("{}", symlink_msg);
