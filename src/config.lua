@@ -16,7 +16,7 @@ Packages = {
     },
 
     Aur = {
-        "downgrade",
+        --"downgrade",
     },
 
     Flatpak = {
