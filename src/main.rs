@@ -5,6 +5,10 @@ use colour::*;
 /*
 BIG TODOS:
     => Verify Symlinks are stable and reliable, or patch them if needed
+    => Before trying to install a package, check if it is already installed in the system, not just through explicitly installed means. It could be dragged in as a
+    dependency then someone could explicitly want to intsall it and it is still marked as a dep
+    => verify flatpak is present on the system, and investigate scenario where "application id" top banner doesn't appear causing the code to remove it to fail
+    
 */
 
 /*
@@ -15,13 +19,13 @@ Grey - Action is already done
 Default - Output from the bash commands
 Yellow - Warning (ie. can be recovered from or only prevents one specific thing)
 Red - Critical Error that prevents that overall stage from working properly, needs immediate attention
-Bold White - Expected output that will always occur / Part of an action that is not yet finished
+White - Expected output that will always occur / Part of an action that is not yet finished
 Cyan - New section
 Magenta - Finished section
 */
 
 // Config Variables
-const SEE_STDOUT : bool = false;
+const SEE_STDOUT : bool = true;
 const SEE_STDERR : bool = true;
 const ASSUME_YES : bool = true;
 const PACKAGE_REMOVE_WARN_LIMIT : u32 = 5;
@@ -33,14 +37,14 @@ fn remove_path(path : String) {
         let mut ret: Option<Result<(), std::io::Error>> = None;
         if Path::new(&path).is_dir() {
             yellow!("Warning: ");
-            white_ln_bold!("Are you sure you would like to remove the directory at {} [y/n]", path);
+            white_ln!("Are you sure you would like to remove the directory at {} [y/n]", path);
             let confirm = get_confirmation();
             if confirm {
                 ret = Some(fs::remove_dir_all(&path));
             }
         } else {
             yellow!("Warning: ");
-            white_ln_bold!("Are you sure you would like to remove the file at {} [y/n]", path);
+            white_ln!("Are you sure you would like to remove the file at {} [y/n]", path);
             let confirm = get_confirmation();
             if confirm {
                 ret = Some(fs::remove_file(&path));
@@ -51,15 +55,15 @@ fn remove_path(path : String) {
             match ret.unwrap() {
                 Err(err)=> {
                     red!("ERROR: ");
-                    white_ln_bold!("Failed to delete path at {} | {}", path, err);
+                    white_ln!("Failed to delete path at {} | {}", path, err);
                 },
                 Ok(()) => {
                     green!("Removed: ");
-                    white_ln_bold!("Removed path at {}", path);
+                    white_ln!("Removed path at {}", path);
                 }
             }
         } else {
-            white_ln_bold!("Skipped removing path");
+            white_ln!("Skipped removing path");
         }
     }
 }
@@ -133,7 +137,7 @@ fn send_output(mut output : Command) -> bool {
 
 // Builds AUR packages and installs them
 fn build_aur(name : &str) {
-    white_ln_bold!("Building (AUR) {}", name);
+    white_ln!("Building (AUR) {}", name);
 
     let mut output = Command::new("makepkg");
     output.arg("-si");
@@ -142,7 +146,7 @@ fn build_aur(name : &str) {
     let success = send_output(output);
     if success {
         green!("Installed: ");
-        white_ln_bold!("(AUR) {}", name);
+        white_ln!("(AUR) {}", name);
     }
 }
 
@@ -181,7 +185,7 @@ fn main() -> Result<(), mlua::Error> {
 
             _ => {
                 red!("ERROR: ");
-                white_ln_bold!("Unerecognised value in install locations table, key {:?}, value {:?}", key, value);
+                white_ln!("Unerecognised value in install locations table, key {:?}, value {:?}", key, value);
             },
 
         }
@@ -189,7 +193,7 @@ fn main() -> Result<(), mlua::Error> {
 
     // PACKAGES START
     cyan!("Starting: ");
-    white_ln_bold!("Removing packages");
+    white_ln!("Removing packages");
 
     // Get currently installed packages -- this one needs to use .output to get the stdout.
     let output = Command::new("pacman")
@@ -211,6 +215,8 @@ fn main() -> Result<(), mlua::Error> {
     let official_table: mlua::Table = packages_table.get("Official")?;
     let aur_table: mlua::Table = packages_table.get("Aur")?;
     let flatpak_table: mlua::Table = packages_table.get("Flatpak")?;
+
+    // SOMEHOW SET FLATPAK AS A REQUIRED DEPENDENCY, ALSO APPLICATION ID COLUMN DOESN'T SHOW FOR SOME REASON UNLESS YOU HAVE SOMETHING INSTALLED
 
     // flatpak packages
     let flatpak_packages = Command::new("flatpak")
@@ -243,6 +249,8 @@ fn main() -> Result<(), mlua::Error> {
         yellow_ln!("Are you sure you want to remove the specified packages? [y/n]");
         should_remove_package = get_confirmation();
     }
+
+    // TODO CHECK IF DIRECTORY EXISTS - ON FIRST RUN IT DOESNT!
 
     // Clean up AUR directory
     let entries = fs::read_dir(&install_locations["Aur"])?;
@@ -279,7 +287,7 @@ fn main() -> Result<(), mlua::Error> {
             let success : bool = send_output(output);
             if success {
                 green!("Removed: ");
-                white_ln_bold!("{:?}", packages_to_remove);
+                white_ln!("{:?}", packages_to_remove);
             } else {
                 let _success : bool = send_output(dep);
             }    
@@ -298,7 +306,7 @@ fn main() -> Result<(), mlua::Error> {
             let success = send_output(output);
             if success {
                 green!("Removed: ");
-                white_ln_bold!("{:?}", flapak_packages_to_remove);
+                white_ln!("{:?}", flapak_packages_to_remove);
             }
         
             let mut output = Command::new("flatpak");
@@ -310,7 +318,7 @@ fn main() -> Result<(), mlua::Error> {
         }
 
         magenta!("Finished: ");
-        white_ln_bold!("Removed all intended packages");
+        white_ln!("Removed all intended packages");
     } else {
         grey_ln!("Skipping removing packages");
     }
@@ -318,8 +326,8 @@ fn main() -> Result<(), mlua::Error> {
     // INSTALLING PACKAGES //
 
     cyan!("Starting: ");
-    white_ln_bold!("Installing Packages");
-    white_ln_bold!("Upgrading System");
+    white_ln!("Installing Packages");
+    white_ln!("Upgrading System");
     
     // Upgrade System
     let mut output = Command::new("sudo");
@@ -329,7 +337,7 @@ fn main() -> Result<(), mlua::Error> {
     send_output(output);
 
     green!("Installed: ");
-    white_ln_bold!("Upgraded System");
+    white_ln!("Upgraded System");
 
     // Installing official packages
     for pair in official_table.pairs::<mlua::Value, mlua::Value>() {
@@ -342,7 +350,7 @@ fn main() -> Result<(), mlua::Error> {
                     let index = packages.iter().position(|&r| r == string_str);
                     packages.remove(index.unwrap());
                 } else {
-                    white_ln_bold!("Attempting to install {}", string_str);
+                    white_ln!("Attempting to install {}", string_str);
 
                     // First we need to check if the package is in a group
                     // Ideally, we would allow group installations but it presents the issue of the config
@@ -383,7 +391,7 @@ fn main() -> Result<(), mlua::Error> {
                     let success = send_output(output);
                     if success {
                         green!("Installed: ");
-                        white_ln_bold!("{}", string_str);
+                        white_ln!("{}", string_str);
                     }
                 }
             },
@@ -422,7 +430,7 @@ fn main() -> Result<(), mlua::Error> {
                     .expect("Failed to execute command");
 
                     if output.status.success() {
-                        white_ln_bold!("Pulled (AUR) {}", string_str);
+                        white_ln!("Pulled (AUR) {}", string_str);
                     } else {
                         red_ln!("{:?}", String::from_utf8_lossy(&output.stderr));
                     }
@@ -444,9 +452,9 @@ fn main() -> Result<(), mlua::Error> {
                         continue;
                     }
 
-                    white_ln_bold!("Attempting to install (AUR) {}", string_str);
+                    white_ln!("Attempting to install (AUR) {}", string_str);
                     let directory = install_locations["Aur"].clone() + "/" + string_str; // Can lead to double slash instances but doesn't seem to do anything
-                    white_ln_bold!("Creating Directory at: {:?}", directory);
+                    white_ln!("Creating Directory at: {:?}", directory);
                     fs::create_dir_all::<&str>(directory.as_ref())?;
 
                     let output = Command::new("git")
@@ -457,7 +465,7 @@ fn main() -> Result<(), mlua::Error> {
                     .expect("Failed to execute command");
                 
                     if output.status.success() {
-                        white_ln_bold!("Cloned (AUR) {}", string_str);
+                        white_ln!("Cloned (AUR) {}", string_str);
                     } else {
                         red_ln!("{:?}", String::from_utf8_lossy(&output.stderr));
                     }
@@ -486,7 +494,7 @@ fn main() -> Result<(), mlua::Error> {
                     flatpak_packages.remove(index.unwrap());
                     grey_ln!("Already Installed {}", string_str);
                 } else {
-                    white_ln_bold!("Attempting to install {}", string_str);
+                    white_ln!("Attempting to install {}", string_str);
 
                     let mut output = Command::new("flatpak");
                     output.arg("install");
@@ -496,7 +504,7 @@ fn main() -> Result<(), mlua::Error> {
                     let success = send_output(output);
                     if success {
                         green!("Installed: ");
-                        white_ln_bold!("{}", string_str);
+                        white_ln!("{}", string_str);
                     }
                 }
             },
@@ -506,11 +514,11 @@ fn main() -> Result<(), mlua::Error> {
         }
     }
     magenta!("Finished: ");
-    white_ln_bold!("Installed all intended packages");
+    white_ln!("Installed all intended packages");
 
     // Read cached save file
     cyan!("Starting: ");
-    white_ln_bold!("Reading previous save file");
+    white_ln!("Reading previous save file");
 
     let save_exist = Path::new(&install_locations["Save"]).exists();
 
@@ -556,34 +564,34 @@ fn main() -> Result<(), mlua::Error> {
                 },
                 _ => {
                     red!("ERROR: ");
-                    white_ln_bold!("Identifier Name: {} was not recognised in the config.king file!", identifier);
+                    white_ln!("Identifier Name: {} was not recognised in the config.king file!", identifier);
                 },
             }
         }
 
     } else {
         yellow!("Warning: ");
-        white_ln_bold!("No previous run save file detected, expected behaviour for first run, generating new file");
+        white_ln!("No previous run save file detected, expected behaviour for first run, generating new file");
         let res = File::create(&install_locations["Save"]);
 
         match res {
             Err(err)=> {
                 red!("ERROR: ");
-                white_ln_bold!("Failed to create save file | {}", err);
+                white_ln!("Failed to create save file | {}", err);
             },
             _file => {
                 green!("Created: ");
-                white_ln_bold!("config.king save file");
+                white_ln!("config.king save file");
             }
         }
     }
 
     magenta!("Finished: ");
-    white_ln_bold!("Read save file");
+    white_ln!("Read save file");
 
     // Creating Symlinks
     cyan!("Starting: ");
-    white_ln_bold!("Regenerating Symlinks");
+    white_ln!("Regenerating Symlinks");
 
     let symlinks_table: mlua::Table = globals.get("Symlinks")?;
     let mut new_symlinks: HashMap<String, String> = HashMap::new();
@@ -667,12 +675,12 @@ fn main() -> Result<(), mlua::Error> {
                     match res {
                         Err(err)=> {
                             red!("ERROR: ");
-                            white_ln_bold!("Failed to create symlink from {} to {} | {}", link_dir, original_dir, err);
+                            white_ln!("Failed to create symlink from {} to {} | {}", link_dir, original_dir, err);
                             continue;
                         },
                         Ok(()) => {
                             green!("Created: ");
-                            white_ln_bold!("Symlink at {} which targets {}", link_dir, original_dir);
+                            white_ln!("Symlink at {} which targets {}", link_dir, original_dir);
                         }
                     }
                 }
@@ -695,11 +703,11 @@ fn main() -> Result<(), mlua::Error> {
     symlink_msg.push_str("];");
 
     magenta!("Finished: ");
-    white_ln_bold!("Managed all Symlinks");
+    white_ln!("Managed all Symlinks");
 
     // Write updated information to the save file
     cyan!("Starting: ");
-    white_ln_bold!("Updating Save File");
+    white_ln!("Updating Save File");
 
     let mut file = OpenOptions::new()
     .write(true)
@@ -712,19 +720,19 @@ fn main() -> Result<(), mlua::Error> {
     match res {
         Err(err)=> {
             red!("ERROR: ");
-            white_ln_bold!("Failed to update save.king file | {}", err);
+            white_ln!("Failed to update save.king file | {}", err);
         },
         Ok(()) => {
             green!("Updated: ");
-            white_ln_bold!("save.king file with new cached information");
+            white_ln!("save.king file with new cached information");
         }
     }
 
     magenta!("Finished: ");
-    white_ln_bold!("Updated Save File");
+    white_ln!("Updated Save File");
 
     // Everything done, we can exit
     magenta!("Finished: ");
-    white_ln_bold!("Completed all tasks");
+    white_ln!("Completed all tasks");
     Ok(())
 }
