@@ -34,30 +34,38 @@ const DEFAULT_YES : bool = true;
 fn remove_path(path : String) {
     println!("Entered path remover");
     if Path::new(&path).exists() {
-        let mut ret: Option<Result<(), std::io::Error>> = None;
+        let mut ret: Option<bool> = None;
         if Path::new(&path).is_dir() {
             yellow!("Warning: ");
             white_ln!("Are you sure you would like to remove the directory at {} [y/n]", path);
             let confirm = get_confirmation();
             if confirm {
-                ret = Some(fs::remove_dir_all(&path));
+                let mut output = Command::new("sudo");
+                output.arg("rm");
+                output.arg("-r");
+                output.arg(&path);
+                ret = Some(send_output(output));
+
             }
         } else {
             yellow!("Warning: ");
             white_ln!("Are you sure you would like to remove the file at {} [y/n]", path);
             let confirm = get_confirmation();
             if confirm {
-                ret = Some(fs::remove_file(&path));
+                let mut output = Command::new("sudo");
+                output.arg("rm");
+                output.arg(&path);
+                ret = Some(send_output(output));
             }
         };
 
         if !ret.is_none() {
             match ret.unwrap() {
-                Err(err)=> {
+                false => {
                     red!("ERROR: ");
-                    white_ln!("Failed to delete path at {} | {}", path, err);
+                    white_ln!("Failed to delete path at {}", path);
                 },
-                Ok(()) => {
+                true => {
                     green!("Removed: ");
                     white_ln!("Removed path at {}", path);
                 }
