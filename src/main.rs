@@ -7,8 +7,6 @@ BIG TODOS:
     => Verify Symlinks are stable and reliable, or patch them if needed
     => Before trying to install a package, check if it is already installed in the system, not just through explicitly installed means. It could be dragged in as a
     dependency then someone could explicitly want to intsall it and it is still marked as a dep
-    => verify flatpak is present on the system, and investigate scenario where "application id" top banner doesn't appear causing the code to remove it to fail,
-    i believe this is due to no flatpaks or even runtimes being present on the system
     => Fix broken flatpak removal + broken flatpak install (it always tries to install)
     => Test if packages actually need to be set as a dep or not if removal fails
 */
@@ -296,7 +294,10 @@ fn main() -> Result<(), mlua::Error> {
     
     let flatpak_packages: String = String::from_utf8(flatpak_packages.stdout).unwrap();
     let mut flatpak_packages : Vec<&str> = flatpak_packages.lines().collect();
-    flatpak_packages.remove(0); // Remove the first value as it's the header "APPLICATION ID"
+    if flatpak_packages.len() >= 1 { // Application ID header doesn't exist if no flatpaka are installed
+        flatpak_packages.remove(0); // Remove the first value as it's the header "APPLICATION ID"
+
+    }
 
     // REMOVING PACKAGES //
 
