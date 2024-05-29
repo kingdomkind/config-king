@@ -1,5 +1,5 @@
 use mlua::prelude::*;
-use std::{collections::HashMap, env, fs::{self, File, OpenOptions}, io::{self, Read, Write}, ops::Index, os::unix::fs::symlink, panic::Location, path::{Path, PathBuf}, process::{exit, Command}};
+use std::{collections::HashMap, env, fs::{self, File, OpenOptions}, io::{self, Read, Write},path::Path, process::{exit, Command}};
 use colour::*;
 
 /*
@@ -7,8 +7,10 @@ BIG TODOS:
     => Verify Symlinks are stable and reliable, or patch them if needed
     => Before trying to install a package, check if it is already installed in the system, not just through explicitly installed means. It could be dragged in as a
     dependency then someone could explicitly want to intsall it and it is still marked as a dep
-    => verify flatpak is present on the system, and investigate scenario where "application id" top banner doesn't appear causing the code to remove it to fail
-    
+    => verify flatpak is present on the system, and investigate scenario where "application id" top banner doesn't appear causing the code to remove it to fail,
+    i believe this is due to no flatpaks or even runtimes being present on the system
+    => Fix broken flatpak removal + broken flatpak install (it always tries to install)
+    => Test if packages actually need to be set as a dep or not if removal fails
 */
 
 /*
@@ -30,6 +32,24 @@ const SEE_STDERR : bool = true;
 const ASSUME_YES : bool = true;
 const PACKAGE_REMOVE_WARN_LIMIT : u32 = 5;
 const DEFAULT_YES : bool = true;
+
+fn quick_install(package_name: String) {
+    let mut output = Command::new("sudo");
+    output.arg("pacman");
+    output.arg("-S");
+    output.arg(package_name);
+    if ASSUME_YES { output.arg("--noconfirm"); }
+    send_output(output);
+}
+
+fn is_package_installed(package_name: String) -> bool {
+    let output = Command::new("which")
+    .arg(package_name)
+    .output()
+    .expect("Failed to execute command");
+
+    return output.status.success();
+}
 
 fn remove_path(path : String) {
     println!("Entered path remover");
@@ -168,12 +188,52 @@ fn get_current_directory() -> String {
 
 // Main Function
 fn main() -> Result<(), mlua::Error> {
-    let lua = Lua::new();
 
-    // Read the Lua file, cargo run should be run from /src
-    let lua_script: String = fs::read_to_string(env::current_dir()
-    .expect("Unable to get current directory").to_str()
-    .expect("Unable to convert current directory to str").to_string() + "/config.lua")?;
+    let mut arguments: Vec<String> = env::args().collect();
+    arguments.remove(0);
+
+    // Read the Lua file, cargo run should be run from the directory of the config file if no directory is specified
+    let mut lua_script: String = String::new();
+
+    for arg in arguments {
+        let pos = arg.find('=');
+
+        if !pos.is_none() {
+            let key = &arg[..pos.unwrap()];
+            let value = &arg[pos.unwrap() + 1..];
+
+            match key {
+                "directory" => {
+                    lua_script = fs::read_to_string(value.to_string())?;
+                },
+                _ => { yellow!("Warning: "); white_ln!("{} is not a recognised key", key); }
+            }
+        } else {
+            yellow!("Warning: ");
+            white_ln!("No '=' found in the argument {}", arg)
+        }
+    }
+
+    if lua_script.is_empty() {
+        lua_script = fs::read_to_string(env::current_dir()
+        .expect("Unable to get current directory").to_str()
+        .expect("Unable to convert current directory to str").to_string() + "/config.lua")?;
+    }
+
+    // Ensure dependencies are installed!
+    if !is_package_installed("flatpak".to_string()) {
+        yellow!("Warning: ");
+        white_ln!("Flatpak dependency not installed, installing now");
+        quick_install("flatpak".to_string());
+    }
+
+    if !is_package_installed("git".to_string()) {
+        yellow!("Warning: ");
+        white_ln!("Git dependency not installed, installing now");
+        quick_install("git".to_string());
+    }
+
+    let lua = Lua::new();
 
     // Load the Lua script
     let globals = lua.globals();
@@ -555,7 +615,7 @@ fn main() -> Result<(), mlua::Error> {
             match identifier {
                 "symlinks" => {
                     let remainder = &value[identifier_bound+2..value.len()-1]; // +2 to slice of the =[ and -1 to slice the ]
-                    println!("Remainder: {}", remainder);
+                    //println!("Remainder: {}", remainder);
 
                     let sub_elements: Vec<String> = remainder
                     .split(',')
@@ -565,7 +625,7 @@ fn main() -> Result<(), mlua::Error> {
                     .collect();
 
                     for raw_path in sub_elements {
-                        println!("Printing Raw Path: {}",raw_path);
+                        //println!("Printing Raw Path: {}",raw_path);
                         let path: &str =  &raw_path[1..raw_path.len()-1]; // remove speech marks
                         symlink_vec.push(path.to_string());
                     }
@@ -618,13 +678,14 @@ fn main() -> Result<(), mlua::Error> {
         }
     }
 
+    /* Previous dev code
     for (index, value) in &new_symlinks {
         println!("Index: {}, Value: {}", index, value);
     }
 
     for value in symlink_vec.clone() {
         println!("Iter: {}", value);
-    }
+    } */
 
     // Deleting previous symlinks
     for value in symlink_vec {
@@ -633,21 +694,21 @@ fn main() -> Result<(), mlua::Error> {
         .map(|s| s.to_string())
         .collect();
 
-        println!("Location0: {}, Location1: {}", &locations[0], &locations[1]);
+        //println!("Location0: {}, Location1: {}", &locations[0], &locations[1]);
 
         // Check if the symlink already exists, is valid, and if so skip this loop
         if Path::new(&locations[0]).exists() {
-            println!("Path Exists");
+            //println!("Path Exists");
             if new_symlinks.contains_key(&locations[0]) {
-                println!("We still want it (Key still exists)");
+                //println!("We still want it (Key still exists)");
                 let metadata = fs::symlink_metadata(&locations[0])?;
                 if metadata.file_type().is_symlink() {
-                    println!("It's a symlink");
+                    //println!("It's a symlink");
                     if new_symlinks[&locations[0]] == locations[1] {
-                        println!("Bingo, we keep it");
+                        //println!("Bingo, we keep it");
                         continue;
                     } else {
-                        println!("Get rid of this fool");
+                        //println!("Get rid of this fool");
                     }
                 }
             }
