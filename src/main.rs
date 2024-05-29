@@ -679,14 +679,21 @@ fn main() -> Result<(), mlua::Error> {
                 }
 
                 if !already_exist { // Only create the symlink if there's not already one there, we confirmed it was valid in the removal process
-                    let res = symlink(original_dir.clone(), link_dir.clone());
+
+                    let mut output = Command::new("sudo");
+                    output.arg("ln");
+                    output.arg("-s");
+                    output.arg(&original_dir);
+                    output.arg(&link_dir);
+                    let res = send_output(output);
+
                     match res {
-                        Err(err)=> {
+                        false => {
                             red!("ERROR: ");
-                            white_ln!("Failed to create symlink from {} to {} | {}", link_dir, original_dir, err);
+                            white_ln!("Failed to create symlink from {} to {}", link_dir, original_dir);
                             continue;
                         },
-                        Ok(()) => {
+                        true => {
                             green!("Created: ");
                             white_ln!("Symlink at {} which targets {}", link_dir, original_dir);
                         }
