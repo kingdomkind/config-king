@@ -7,8 +7,8 @@ BIG TODOS:
     => Verify Symlinks are stable and reliable, or patch them if needed
     => Before trying to install a package, check if it is already installed in the system, not just through explicitly installed means. It could be dragged in as a
     dependency then someone could explicitly want to intsall it and it is still marked as a dep
-    => Fix broken flatpak removal + broken flatpak install (it always tries to install)
     => Test if packages actually need to be set as a dep or not if removal fails
+    => Check if install locations exist at the start of the script. If not, ask the user if they want them to be created
 */
 
 /*
@@ -163,7 +163,7 @@ fn send_output(mut output : Command) -> bool {
 
 // Builds AUR packages and installs them
 fn build_aur(name : &str) {
-    white_ln!("Building (AUR) {}", name);
+    white_ln!("(AUR) Building {}", name);
 
     let mut output = Command::new("makepkg");
     output.arg("-si");
@@ -294,9 +294,9 @@ fn main() -> Result<(), mlua::Error> {
     
     let flatpak_packages: String = String::from_utf8(flatpak_packages.stdout).unwrap();
     let mut flatpak_packages : Vec<&str> = flatpak_packages.lines().collect();
-    if flatpak_packages.len() >= 1 { // Application ID header doesn't exist if no flatpaka are installed
-        flatpak_packages.remove(0); // Remove the first value as it's the header "APPLICATION ID"
 
+    if flatpak_packages.contains(&"Application ID") {
+        flatpak_packages.remove(0); // Remove the first value as it's the header "Application ID"
     }
 
     // REMOVING PACKAGES //
@@ -343,14 +343,16 @@ fn main() -> Result<(), mlua::Error> {
             output.arg("-Rns");
             if ASSUME_YES { output.arg("--noconfirm"); }
         
+            /*
             let mut dep = Command::new("sudo");
             dep.arg("pacman");
             dep.arg("--asdep");
             dep.arg("-D");
-        
+            */
+
             for value in &packages_to_remove {
                 output.arg(value);
-                dep.arg(value);
+                //dep.arg(value);
             }
         
             let success : bool = send_output(output);
@@ -358,7 +360,7 @@ fn main() -> Result<(), mlua::Error> {
                 green!("Removed: ");
                 white_ln!("{:?}", packages_to_remove);
             } else {
-                let _success : bool = send_output(dep);
+                //let _success : bool = send_output(dep);
             }    
         }
 
@@ -499,7 +501,7 @@ fn main() -> Result<(), mlua::Error> {
                     .expect("Failed to execute command");
 
                     if output.status.success() {
-                        white_ln!("Pulled (AUR) {}", string_str);
+                        // white_ln!("Pulled (AUR) {}", string_str); redundant
                     } else {
                         red_ln!("{:?}", String::from_utf8_lossy(&output.stderr));
                     }
@@ -517,11 +519,11 @@ fn main() -> Result<(), mlua::Error> {
                 } else {
                     // Package isn't installed, need to set it up and install it
                     if !install_locations.contains_key("Aur") {
-                        yellow_ln!("Unable to install (AUR) {} as the install location was not specified.", string_str);
+                        yellow_ln!("(AUR) Unable to install {} as the install location was not specified.", string_str);
                         continue;
                     }
 
-                    white_ln!("Attempting to install (AUR) {}", string_str);
+                    white_ln!("(AUR) Attempting to install {}", string_str);
                     let directory = install_locations["Aur"].clone() + "/" + string_str; // Can lead to double slash instances but doesn't seem to do anything
                     white_ln!("Creating Directory at: {:?}", directory);
                     fs::create_dir_all::<&str>(directory.as_ref())?;
@@ -534,7 +536,7 @@ fn main() -> Result<(), mlua::Error> {
                     .expect("Failed to execute command");
                 
                     if output.status.success() {
-                        white_ln!("Cloned (AUR) {}", string_str);
+                        white_ln!("(AUR) Cloned {}", string_str);
                     } else {
                         red_ln!("{:?}", String::from_utf8_lossy(&output.stderr));
                     }
@@ -561,9 +563,9 @@ fn main() -> Result<(), mlua::Error> {
                 if flatpak_packages.contains(&string_str) {
                     let index = flatpak_packages.iter().position(|&r| r == string_str);
                     flatpak_packages.remove(index.unwrap());
-                    grey_ln!("Already Installed {}", string_str);
+                    grey_ln!("(FLATPAK) {} is already up to date", string_str);
                 } else {
-                    white_ln!("Attempting to install {}", string_str);
+                    white_ln!("(FLATPAK) Attempting to install {}", string_str);
 
                     let mut output = Command::new("flatpak");
                     output.arg("install");
@@ -719,7 +721,7 @@ fn main() -> Result<(), mlua::Error> {
         remove_path(locations[0].to_string());
     }
 
-    println!("Next");
+    //println!("Next");
     // Creating new symlinks
     let mut symlink_msg = String::from("symlinks=[");
 
@@ -791,7 +793,7 @@ fn main() -> Result<(), mlua::Error> {
     .truncate(true)
     .open("/home/pika/.config-king/save.king")?;
 
-    println!("{}", symlink_msg);
+    //println!("New save file: {}", symlink_msg);
     let res = file.write_all(symlink_msg.as_bytes());
 
     match res {
