@@ -9,6 +9,8 @@ BIG TODOS:
     dependency then someone could explicitly want to intsall it and it is still marked as a dep
     => Test if packages actually need to be set as a dep or not if removal fails
     => Check if install locations exist at the start of the script. If not, ask the user if they want them to be created
+    => Fix AUR installs, use AUR api to grab correct git clone repo. Need to check pkgname for official and AUR packages to see what they install. They will install all the pkgnames.
+    => Refactor code base into its own seperate sections
 */
 
 /*
