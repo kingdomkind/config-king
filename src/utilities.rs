@@ -77,7 +77,6 @@ pub fn send_output(mut output : Command) -> bool {
 }
 
 pub fn remove_path(path : String) {
-    println!("Entered path remover");
     if Path::new(&path).exists() {
         let mut ret: Option<bool> = None;
         if Path::new(&path).is_dir() {

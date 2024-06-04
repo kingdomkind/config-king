@@ -1,3 +1,4 @@
+use aur::{make_and_install_package, pull_package};
 use mlua::prelude::*;
 use std::{collections::HashMap, env, fs::{self, File, OpenOptions}, io::{Read, Write},path::Path, process::Command};
 use colour::*;
@@ -226,6 +227,7 @@ fn main() -> Result<(), mlua::Error> {
             mlua::Value::String(string) => {
 
                 let string_str = string.to_str().unwrap();
+                let mut install_required = true;
 
                 if system_packages.contains(&string_str.to_string()) {
 
@@ -236,33 +238,15 @@ fn main() -> Result<(), mlua::Error> {
                     // Incase the install directory has changed or the folder was manually deleted
                     if !std::path::Path::new(&directory).exists() {
                         std::fs::create_dir(&directory)?;
-                    }
-
-                    let og_directory = utilities::get_current_directory();
-                    env::set_current_dir(directory)?;
-
-                    let output = Command::new("git")
-                    .arg("pull")
-                    .output()
-                    .expect("Failed to execute command");
-
-                    if output.status.success() {
-                        // white_ln!("Pulled (AUR) {}", string_str); redundant
                     } else {
-                        red_ln!("{:?}", String::from_utf8_lossy(&output.stderr));
+                        install_required = false;
+                        let needs_update = pull_package(install_locations["Aur"].clone(), string_str.to_string());
+                        if needs_update { make_and_install_package(install_locations["Aur"].clone(), string_str.to_string()) }
+                        system_packages.remove(index.unwrap());
                     }
-                    
-                    // Checking if already updated, if not, then build and continue
-                    if String::from_utf8_lossy(&output.stdout) != "Already up to date.\n" {
-                        aur::build_aur(string_str);
-                    } else {
-                        grey_ln!("(AUR) {} is already up to date", string_str);
-                    }
+                }
 
-                    env::set_current_dir(og_directory)?;
-                    system_packages.remove(index.unwrap());
-                    
-                } else {
+                if install_required == true {
                     // Package isn't installed, need to set it up and install it
                     if !install_locations.contains_key("Aur") {
                         yellow_ln!("(AUR) Unable to install {} as the install location was not specified.", string_str);
@@ -270,27 +254,8 @@ fn main() -> Result<(), mlua::Error> {
                     }
 
                     white_ln!("(AUR) Attempting to install {}", string_str);
-                    let directory = install_locations["Aur"].clone() + "/" + string_str; // Can lead to double slash instances but doesn't seem to do anything
-                    white_ln!("Creating Directory at: {:?}", directory);
-                    fs::create_dir_all::<&str>(directory.as_ref())?;
-
-                    let output = Command::new("git")
-                    .arg("clone")
-                    .arg("https://aur.archlinux.org/".to_owned() + string_str + ".git")
-                    .arg::<&str>(directory.as_ref())
-                    .output()
-                    .expect("Failed to execute command");
-                
-                    if output.status.success() {
-                        white_ln!("(AUR) Cloned {}", string_str);
-                    } else {
-                        red_ln!("{:?}", String::from_utf8_lossy(&output.stderr));
-                    }
-
-                    let og_directory = utilities::get_current_directory();
-                    env::set_current_dir(directory)?;
-                    aur::build_aur(string_str);
-                    env::set_current_dir(og_directory)?;
+                    aur::clone_package(install_locations["Aur"].clone(), string_str.to_string());
+                    aur::make_and_install_package(install_locations["Aur"].clone(), string_str.to_string())
                 }
             },
 
@@ -427,37 +392,20 @@ fn main() -> Result<(), mlua::Error> {
         }
     }
 
-    /* Previous dev code
-    for (index, value) in &new_symlinks {
-        println!("Index: {}, Value: {}", index, value);
-    }
-
-    for value in symlink_vec.clone() {
-        println!("Iter: {}", value);
-    } */
-
     // Deleting previous symlinks
     for value in symlink_vec {
         let locations: Vec<String> = value
         .split('=')
         .map(|s| s.to_string())
         .collect();
-
-        //println!("Location0: {}, Location1: {}", &locations[0], &locations[1]);
-
+    
         // Check if the symlink already exists, is valid, and if so skip this loop
         if Path::new(&locations[0]).exists() {
-            //println!("Path Exists");
             if new_symlinks.contains_key(&locations[0]) {
-                //println!("We still want it (Key still exists)");
                 let metadata = fs::symlink_metadata(&locations[0])?;
                 if metadata.file_type().is_symlink() {
-                    //println!("It's a symlink");
                     if new_symlinks[&locations[0]] == locations[1] {
-                        //println!("Bingo, we keep it");
                         continue;
-                    } else {
-                        //println!("Get rid of this fool");
                     }
                 }
             }
@@ -467,7 +415,6 @@ fn main() -> Result<(), mlua::Error> {
         utilities::remove_path(locations[0].to_string());
     }
 
-    //println!("Next");
     // Creating new symlinks
     let mut symlink_msg = String::from("symlinks=[");
 

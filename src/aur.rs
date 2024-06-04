@@ -1,27 +1,11 @@
+use std::env;
 use std::fs;
 use std::process::Command;
 use super::utilities;
 use super::globals::*;
 use colour::*;
 
-// Builds AUR packages and installs them
-pub fn build_aur(name : &str) {
-    white_ln!("(AUR) Building {}", name);
-
-    let mut output = Command::new("makepkg");
-    output.arg("-si");
-    if ASSUME_YES { output.arg("--noconfirm"); }
-
-    let success = utilities::send_output(output);
-    if success {
-        green!("Installed: ");
-        white_ln!("(AUR) {}", name);
-    }
-}
-
 pub fn remove_uninstalled_aur_directories(aur_table : mlua::Table, aur_location : String) {
-    // TODO CHECK IF DIRECTORY EXISTS - ON FIRST RUN IT DOESNT!
-
     // Clean up AUR directory
     let entries = fs::read_dir(&aur_location);
     let mut entry_names = Vec::new();
@@ -33,6 +17,70 @@ pub fn remove_uninstalled_aur_directories(aur_table : mlua::Table, aur_location 
 
     for entry in aur_packages_to_remove {
         utilities::remove_path(aur_location.to_owned() + &entry);
+    }   
+}
+
+pub fn pull_package(aur_location: String, package: String) -> bool {
+    let og_directory = utilities::get_current_directory();
+    let _ = env::set_current_dir(aur_location + "/" + &package);
+
+    let output = Command::new("git")
+    .arg("pull")
+    .output()
+    .expect("Failed to execute command");
+
+    if output.status.success() {
+        // white_ln!("Pulled (AUR) {}", string_str); redundant
+    } else {
+        red_ln!("{:?}", String::from_utf8_lossy(&output.stderr));
     }
     
+    let _ = env::set_current_dir(og_directory);
+
+    // Checking if already updated, if not, then build and continue
+    if String::from_utf8_lossy(&output.stdout) != "Already up to date.\n" {
+        return true;
+    } else {
+        grey_ln!("(AUR) {} is already up to date", package);
+        return false;
+    }
+}
+
+pub fn clone_package(aur_location: String, package: String) {
+    let og_directory = utilities::get_current_directory();
+    let _ = env::set_current_dir(aur_location);
+
+    let output = Command::new("git")
+    .arg("clone")
+    .arg("https://aur.archlinux.org/".to_owned() + &package + ".git")
+    .output()
+    .expect("Failed to execute command");
+
+    if output.status.success() {
+        white_ln!("(AUR) Cloned {}", package);
+    } else {
+        red_ln!("{:?}", String::from_utf8_lossy(&output.stderr));
+    }
+
+    let _ = env::set_current_dir(og_directory);
+}
+
+pub fn make_and_install_package(aur_location: String, package: String) {
+
+    let og_directory = utilities::get_current_directory();
+    let _ = env::set_current_dir(aur_location + "/" + &package);
+
+    white_ln!("(AUR) Building {}", package);
+
+    let mut output = Command::new("makepkg");
+    output.arg("-si");
+    if ASSUME_YES { output.arg("--noconfirm"); }
+
+    let success = utilities::send_output(output);
+    if success {
+        green!("Installed: ");
+        white_ln!("(AUR) {}", package);
+    }
+
+    let _ = env::set_current_dir(og_directory);
 }
