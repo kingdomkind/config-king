@@ -1,6 +1,6 @@
 use aur::{make_and_install_package, pull_package};
 use mlua::prelude::*;
-use std::{collections::HashMap, env, fs::{self, File, OpenOptions}, io::{Read, Write},path::Path, process::Command};
+use std::{collections::HashMap, env, fs::{self, File, OpenOptions}, io::{Read, Write},path::Path, process::Command, vec};
 use colour::*;
 
 mod globals;
@@ -274,20 +274,8 @@ fn main() -> Result<(), mlua::Error> {
                 if flatpak_packages.contains(&string_str.to_string()) {
                     let index = flatpak_packages.iter().position(|r| r == string_str);
                     flatpak_packages.remove(index.unwrap());
-                    grey_ln!("(FLATPAK) {} is already up to date", string_str);
                 } else {
-                    white_ln!("(FLATPAK) Attempting to install {}", string_str);
-
-                    let mut output = Command::new("flatpak");
-                    output.arg("install");
-                    output.arg(string_str);
-                    if ASSUME_YES { output.arg("--assumeyes"); }
-
-                    let success = utilities::send_output(output);
-                    if success {
-                        green!("Installed: ");
-                        white_ln!("{}", string_str);
-                    }
+                    flatpak::install_packages(vec![string_str.to_string()]);
                 }
             },
 
@@ -295,6 +283,9 @@ fn main() -> Result<(), mlua::Error> {
 
         }
     }
+
+    // UPDATE ALL FLATPAKS NOW!
+
     magenta!("Finished: ");
     white_ln!("Installed all intended packages");
 
@@ -398,7 +389,7 @@ fn main() -> Result<(), mlua::Error> {
         .split('=')
         .map(|s| s.to_string())
         .collect();
-    
+
         // Check if the symlink already exists, is valid, and if so skip this loop
         if Path::new(&locations[0]).exists() {
             if new_symlinks.contains_key(&locations[0]) {
