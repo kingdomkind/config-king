@@ -1,4 +1,3 @@
-use aur::remove_uninstalled_aur_directories;
 use mlua::prelude::*;
 use std::{collections::HashMap, env, fs::{self, File, OpenOptions}, io::{Read, Write},path::Path, process::Command};
 use colour::*;
@@ -7,6 +6,7 @@ mod globals;
 mod utilities;
 mod official;
 mod aur;
+mod flatpak;
 
 use globals::*;
 
@@ -71,13 +71,13 @@ fn main() -> Result<(), mlua::Error> {
     if !utilities::is_system_package_installed("flatpak") {
         yellow!("Warning: ");
         white_ln!("Flatpak dependency not installed, installing now");
-        official::install_packages(vec!["flatpak"]);
+        official::install_packages(vec![String::from("flatpak")]);
     }
 
     if !utilities::is_system_package_installed("git") {
         yellow!("Warning: ");
         white_ln!("Git dependency not installed, installing now");
-        official::install_packages(vec!["git"]);
+        official::install_packages(vec![String::from("flatpak")]);
     }
 
     let lua = Lua::new();
@@ -138,11 +138,11 @@ fn main() -> Result<(), mlua::Error> {
     // Getting packages to remove
     let mut packages_to_remove = utilities::subtract_lua_vec(system_packages.clone(), official_table.clone());
     packages_to_remove = utilities::subtract_lua_vec(packages_to_remove, aur_table.clone());
-    let flapak_packages_to_remove: Vec<String> = utilities::subtract_lua_vec(flatpak_packages.clone(), flatpak_table.clone());
+    let flatpak_packages_to_remove: Vec<String> = utilities::subtract_lua_vec(flatpak_packages.clone(), flatpak_table.clone());
 
     // Checking if we should actually remove the packages, if above the regular warn limit
     let mut should_remove_package : bool = true;
-    if (packages_to_remove.len() + flapak_packages_to_remove.len()) > PACKAGE_REMOVE_WARN_LIMIT.try_into().unwrap() {
+    if (packages_to_remove.len() + flatpak_packages_to_remove.len()) > PACKAGE_REMOVE_WARN_LIMIT.try_into().unwrap() {
         yellow_ln!("Packages to remove is above the warning limit of {} and are:", PACKAGE_REMOVE_WARN_LIMIT);
 
         for value in &packages_to_remove {
@@ -155,50 +155,12 @@ fn main() -> Result<(), mlua::Error> {
 
     if should_remove_package {
 
-        remove_uninstalled_aur_directories(aur_table.clone(), install_locations["Aur"].clone());
-        // Removing regular packages
-        if packages_to_remove.len() > 0 {
-            let mut output = Command::new("sudo");
-            output.arg("pacman");
-            output.arg("-Rns");
-            if ASSUME_YES { output.arg("--noconfirm"); }
-
-            for value in &packages_to_remove {
-                output.arg(value);
-            }
-        
-            let success : bool = utilities::send_output(output);
-            if success {
-                green!("Removed: ");
-                white_ln!("{:?}", packages_to_remove);
-            } else {
-                //let _success : bool = send_output(dep);
-            }    
-        }
-
+        // Cleaning up old AUR directories
+        aur::remove_uninstalled_aur_directories(aur_table.clone(), install_locations["Aur"].clone());
+        // Removing system (official + AUR) packages
+        official::remove_system_packages(packages_to_remove);
         // Removing flatpack packages
-        if flapak_packages_to_remove.len() > 0 {
-            let mut output = Command::new("flatpak");
-            output.arg("uninstall");
-            if ASSUME_YES { output.arg("--assumeyes"); }
-
-            for value in &flapak_packages_to_remove {
-                output.arg(value);
-            }
-
-            let success = utilities::send_output(output);
-            if success {
-                green!("Removed: ");
-                white_ln!("{:?}", flapak_packages_to_remove);
-            }
-        
-            let mut output = Command::new("flatpak");
-            output.arg("uninstall");
-            output.arg("--unused");
-            if ASSUME_YES { output.arg("--assumeyes"); }
-
-            let _success = utilities::send_output(output);
-        }
+        flatpak::remove_packages(flatpak_packages_to_remove);
 
         magenta!("Finished: ");
         white_ln!("Removed all intended packages");
@@ -213,11 +175,7 @@ fn main() -> Result<(), mlua::Error> {
     white_ln!("Upgrading System");
     
     // Upgrade System
-    let mut output = Command::new("sudo");
-    output.arg("pacman");
-    output.arg("-Syu");
-    if ASSUME_YES { output.arg("--noconfirm"); }
-    utilities::send_output(output);
+    official::upgrade_system();
 
     green!("Installed: ");
     white_ln!("Upgraded System");
@@ -235,47 +193,23 @@ fn main() -> Result<(), mlua::Error> {
                 } else {
                     white_ln!("Attempting to install {}", string_str);
 
-                    // First we need to check if the package is in a group
-                    // Ideally, we would allow group installations but it presents the issue of the config
-                    // not lining up with installed packages, and without the ability to tell if a package
-                    // was installed via a group, we cannot remedy this
-                    let mut is_group : bool = false;
-                    let output = Command::new("pacman")
-                    .arg("-Sg")
-                    .arg(string_str)
-                    .output()
-                    .expect("Failed to execute command");
-
-                    let raw_out: String = String::from_utf8(output.stdout).unwrap();
-                    let out : Vec<&str> = raw_out.lines().collect();
-
-                    if out.len() != 0 {
-                        is_group = true;
-                    }
+                    // Deny if package is in a group, as we cannot track packages installed from groups!
+                    let is_group = official::is_package_group(string_str.to_string());
 
                     if is_group {
                         yellow_ln!("SKIPPING: The specified package of \"{}\" is a package group, which is not supported", string_str);
                         yellow_ln!("Please instead install the packages specified by the group. See specified packages? [y/n]");
                         let see_packages = utilities::get_confirmation();
                         if see_packages {
-                            for value in out {
+                            let packages_in_group = official::get_packages_in_group(string_str.to_string());
+                            for value in packages_in_group {
                                 yellow_ln!("{}", value);
                             }
                         }
                         continue;
                     }
 
-                    let mut output = Command::new("sudo");
-                    output.arg("pacman");
-                    output.arg("-S");
-                    output.arg(string_str);
-                    if ASSUME_YES { output.arg("--noconfirm"); }
-
-                    let success = utilities::send_output(output);
-                    if success {
-                        green!("Installed: ");
-                        white_ln!("{}", string_str);
-                    }
+                    official::install_packages(vec![string_str.to_string()]);
                 }
             },
 
