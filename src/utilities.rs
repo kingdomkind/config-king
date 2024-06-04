@@ -65,19 +65,6 @@ pub fn get_current_directory() -> String {
     return  og_directory;
 }
 
-pub fn install_system_packages(package_names: Vec<&str>) {
-    let mut output = Command::new("sudo");
-    output.arg("pacman");
-    output.arg("-S");
-
-    for package in package_names {
-        output.arg(package);
-    }
-    
-    if ASSUME_YES { output.arg("--noconfirm"); }
-    send_output(output);
-}
-
 // Runs Commands, and displays the output and returns if successful
 pub fn send_output(mut output : Command) -> bool {
 

@@ -1,16 +1,17 @@
+use aur::remove_uninstalled_aur_directories;
 use mlua::prelude::*;
-use std::{collections::HashMap, env, fs::{self, File, OpenOptions}, io::{self, Read, Write},path::Path, process::Command};
+use std::{collections::HashMap, env, fs::{self, File, OpenOptions}, io::{Read, Write},path::Path, process::Command};
 use colour::*;
 
 mod globals;
 mod utilities;
+mod official;
 mod aur;
 
 use globals::*;
 
 /*
 BIG TODOS:
-    => Verify Symlinks are stable and reliable, or patch them if needed
     => Before trying to install a package, check if it is already installed in the system, not just through explicitly installed means. It could be dragged in as a
     dependency then someone could explicitly want to intsall it and it is still marked as a dep
     => Test if packages actually need to be set as a dep or not if removal fails
@@ -70,13 +71,13 @@ fn main() -> Result<(), mlua::Error> {
     if !utilities::is_system_package_installed("flatpak") {
         yellow!("Warning: ");
         white_ln!("Flatpak dependency not installed, installing now");
-        utilities::install_system_packages(vec!["flatpak"]);
+        official::install_packages(vec!["flatpak"]);
     }
 
     if !utilities::is_system_package_installed("git") {
         yellow!("Warning: ");
         white_ln!("Git dependency not installed, installing now");
-        utilities::install_system_packages(vec!["git"]);
+        official::install_packages(vec!["git"]);
     }
 
     let lua = Lua::new();
@@ -105,11 +106,7 @@ fn main() -> Result<(), mlua::Error> {
         }
     }
 
-    // PACKAGES START
-    cyan!("Starting: ");
-    white_ln!("Removing packages");
-
-//asdasdasd
+    // FORMING PACKAGE VARIABLES
 
     // Gets tables from the lua script
     let packages_table: mlua::Table = globals.get("Packages")?;
@@ -126,19 +123,22 @@ fn main() -> Result<(), mlua::Error> {
     .expect("Failed to execute command");
     
     let flatpak_packages: String = String::from_utf8(flatpak_packages.stdout).unwrap();
-    let mut flatpak_packages : Vec<&str> = flatpak_packages.lines().collect();
+    let mut flatpak_packages = utilities::vec_str_to_string(flatpak_packages.lines().collect());
 
-    if flatpak_packages.contains(&"Application ID") {
+    if flatpak_packages.contains(&"Application ID".to_string()) {
         flatpak_packages.remove(0); // Remove the first value as it's the header "Application ID"
     }
 
     // REMOVING PACKAGES //
-    let mut system_packages = utilities::get_installed_system_packages();
+    let mut system_packages: Vec<String> = utilities::get_installed_system_packages();
+
+    cyan!("Starting: ");
+    white_ln!("Removing packages");
 
     // Getting packages to remove
-    let mut packages_to_remove = utilities::subtract_lua_vec(system_packages.iter().map(|x| x.to_string()).collect(), official_table.clone());
+    let mut packages_to_remove = utilities::subtract_lua_vec(system_packages.clone(), official_table.clone());
     packages_to_remove = utilities::subtract_lua_vec(packages_to_remove, aur_table.clone());
-    let flapak_packages_to_remove: Vec<String> = utilities::subtract_lua_vec(flatpak_packages.iter().map(|x| x.to_string()).collect(), flatpak_table.clone());
+    let flapak_packages_to_remove: Vec<String> = utilities::subtract_lua_vec(flatpak_packages.clone(), flatpak_table.clone());
 
     // Checking if we should actually remove the packages, if above the regular warn limit
     let mut should_remove_package : bool = true;
@@ -153,40 +153,18 @@ fn main() -> Result<(), mlua::Error> {
         should_remove_package = utilities::get_confirmation();
     }
 
-    // TODO CHECK IF DIRECTORY EXISTS - ON FIRST RUN IT DOESNT!
-
-    // Clean up AUR directory
-    let entries = fs::read_dir(&install_locations["Aur"])?;
-    let mut entry_names = Vec::new();
-    for entry in entries {
-        let file_name = entry?.file_name().into_string().unwrap();
-        entry_names.push(file_name);
-    }
-    let aur_packages_to_remove = utilities::subtract_lua_vec(entry_names, aur_table.clone());
-
-    for entry in aur_packages_to_remove {
-        utilities::remove_path(install_locations["Aur"].clone() + &entry)
-    }
-    
-
     if should_remove_package {
+
+        remove_uninstalled_aur_directories(aur_table.clone(), install_locations["Aur"].clone());
         // Removing regular packages
         if packages_to_remove.len() > 0 {
             let mut output = Command::new("sudo");
             output.arg("pacman");
             output.arg("-Rns");
             if ASSUME_YES { output.arg("--noconfirm"); }
-        
-            /*
-            let mut dep = Command::new("sudo");
-            dep.arg("pacman");
-            dep.arg("--asdep");
-            dep.arg("-D");
-            */
 
             for value in &packages_to_remove {
                 output.arg(value);
-                //dep.arg(value);
             }
         
             let success : bool = utilities::send_output(output);
@@ -394,8 +372,8 @@ fn main() -> Result<(), mlua::Error> {
             mlua::Value::String(string) => {
 
                 let string_str = string.to_str().unwrap();
-                if flatpak_packages.contains(&string_str) {
-                    let index = flatpak_packages.iter().position(|&r| r == string_str);
+                if flatpak_packages.contains(&string_str.to_string()) {
+                    let index = flatpak_packages.iter().position(|r| r == string_str);
                     flatpak_packages.remove(index.unwrap());
                     grey_ln!("(FLATPAK) {} is already up to date", string_str);
                 } else {
