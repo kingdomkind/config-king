@@ -1,6 +1,12 @@
 use mlua::prelude::*;
-use std::{collections::HashMap, env, fs::{self, File, OpenOptions}, io::{self, Read, Write},path::Path, process::{exit, Command}};
+use std::{collections::HashMap, env, fs::{self, File, OpenOptions}, io::{self, Read, Write},path::Path, process::Command};
 use colour::*;
+
+mod globals;
+mod utilities;
+mod aur;
+
+use globals::*;
 
 /*
 BIG TODOS:
@@ -25,153 +31,6 @@ White - Expected output that will always occur / Part of an action that is not y
 Cyan - New section
 Magenta - Finished section
 */
-
-// Config Variables
-const SEE_STDOUT : bool = true;
-const SEE_STDERR : bool = true;
-const ASSUME_YES : bool = true;
-const PACKAGE_REMOVE_WARN_LIMIT : u32 = 5;
-const DEFAULT_YES : bool = true;
-
-fn quick_install(package_name: String) {
-    let mut output = Command::new("sudo");
-    output.arg("pacman");
-    output.arg("-S");
-    output.arg(package_name);
-    if ASSUME_YES { output.arg("--noconfirm"); }
-    send_output(output);
-}
-
-fn is_package_installed(package_name: String) -> bool {
-    let output = Command::new("which")
-    .arg(package_name)
-    .output()
-    .expect("Failed to execute command");
-
-    return output.status.success();
-}
-
-fn remove_path(path : String) {
-    println!("Entered path remover");
-    if Path::new(&path).exists() {
-        let mut ret: Option<bool> = None;
-        if Path::new(&path).is_dir() {
-            yellow!("Warning: ");
-            white_ln!("Are you sure you would like to remove the directory at {} [y/n]", path);
-            let confirm = get_confirmation();
-            if confirm {
-                let mut output = Command::new("sudo");
-                output.arg("rm");
-                output.arg("-r");
-                output.arg(&path);
-                ret = Some(send_output(output));
-
-            }
-        } else {
-            yellow!("Warning: ");
-            white_ln!("Are you sure you would like to remove the file at {} [y/n]", path);
-            let confirm = get_confirmation();
-            if confirm {
-                let mut output = Command::new("sudo");
-                output.arg("rm");
-                output.arg(&path);
-                ret = Some(send_output(output));
-            }
-        };
-
-        if !ret.is_none() {
-            match ret.unwrap() {
-                false => {
-                    red!("ERROR: ");
-                    white_ln!("Failed to delete path at {}", path);
-                },
-                true => {
-                    green!("Removed: ");
-                    white_ln!("Removed path at {}", path);
-                }
-            }
-        } else {
-            white_ln!("Skipped removing path");
-        }
-    }
-}
-
-fn get_confirmation() -> bool {
-    let mut accepted_response = false;
-    let mut choice : bool = false;
-
-    while !accepted_response {
-        let mut response = String::new();
-        accepted_response = true;
-
-        io::stdin().read_line(&mut response).expect("failed to readline");
-
-        match response.trim().to_lowercase().as_str() {
-            "yes" | "y" | "ye" => choice = true,
-            "no" | "n" | "nah" => choice = false,
-            "" => { if DEFAULT_YES { choice = true; } else { choice = false; } },
-            _ => accepted_response = false,
-        }
-    }
-
-    return choice;
-}
-
-fn subtract_lua_vec(rust_table : Vec<String>, lua_table : mlua::Table) -> Vec<String> {
-
-    let mut rust_table = rust_table;
-    for pair in lua_table.pairs::<mlua::Value, mlua::Value>() {
-        let Ok((_key, value)) = pair else { panic!() };
-        match value {
-
-            mlua::Value::String(string) => {
-                let string = string.to_str().unwrap().to_string();
-                if rust_table.contains(&string) {
-                    let index = rust_table.iter().position(|r| *r == string);
-                    rust_table.remove(index.unwrap());
-                }
-            },
-            _ => (),
-
-        }
-    };
-
-    return rust_table;
-}
-
-// Runs Commands, and displays the output and returns if successful
-fn send_output(mut output : Command) -> bool {
-
-    if !SEE_STDOUT { output.stdout(std::process::Stdio::null()); }
-    if !SEE_STDERR { output.stderr(std::process::Stdio::null()); }
-
-    let mut spawned = output.spawn().expect("Unable to output command");
-    let wait = spawned.wait().expect("Failed to wait for output to end");
-    return wait.success();
-}
-
-// Builds AUR packages and installs them
-fn build_aur(name : &str) {
-    white_ln!("(AUR) Building {}", name);
-
-    let mut output = Command::new("makepkg");
-    output.arg("-si");
-    if ASSUME_YES { output.arg("--noconfirm"); }
-
-    let success = send_output(output);
-    if success {
-        green!("Installed: ");
-        white_ln!("(AUR) {}", name);
-    }
-}
-
-// Gets the current directory the program is in
-fn get_current_directory() -> String {
-    let current_dir = Command::new("pwd").output().expect("Couldn't get current directory");
-    let mut og_directory = String::from_utf8(current_dir.stdout).unwrap();
-    og_directory.truncate(og_directory.len() - 1);
-    return  og_directory;
-}
 
 // Main Function
 fn main() -> Result<(), mlua::Error> {
@@ -208,16 +67,16 @@ fn main() -> Result<(), mlua::Error> {
     }
 
     // Ensure dependencies are installed!
-    if !is_package_installed("flatpak".to_string()) {
+    if !utilities::is_system_package_installed("flatpak") {
         yellow!("Warning: ");
         white_ln!("Flatpak dependency not installed, installing now");
-        quick_install("flatpak".to_string());
+        utilities::install_system_packages(vec!["flatpak"]);
     }
 
-    if !is_package_installed("git".to_string()) {
+    if !utilities::is_system_package_installed("git") {
         yellow!("Warning: ");
         white_ln!("Git dependency not installed, installing now");
-        quick_install("git".to_string());
+        utilities::install_system_packages(vec!["git"]);
     }
 
     let lua = Lua::new();
@@ -250,11 +109,7 @@ fn main() -> Result<(), mlua::Error> {
     cyan!("Starting: ");
     white_ln!("Removing packages");
 
-asdasdasd
-
-    // Get readable system packages
-    let raw_packages: String = String::from_utf8(output.stdout).unwrap();
-    let mut packages : Vec<&str> = raw_packages.lines().collect();
+//asdasdasd
 
     // Gets tables from the lua script
     let packages_table: mlua::Table = globals.get("Packages")?;
@@ -278,11 +133,12 @@ asdasdasd
     }
 
     // REMOVING PACKAGES //
+    let mut system_packages = utilities::get_installed_system_packages();
 
     // Getting packages to remove
-    let mut packages_to_remove = subtract_lua_vec(packages.iter().map(|x| x.to_string()).collect(), official_table.clone());
-    packages_to_remove = subtract_lua_vec(packages_to_remove, aur_table.clone());
-    let flapak_packages_to_remove: Vec<String> = subtract_lua_vec(flatpak_packages.iter().map(|x| x.to_string()).collect(), flatpak_table.clone());
+    let mut packages_to_remove = utilities::subtract_lua_vec(system_packages.iter().map(|x| x.to_string()).collect(), official_table.clone());
+    packages_to_remove = utilities::subtract_lua_vec(packages_to_remove, aur_table.clone());
+    let flapak_packages_to_remove: Vec<String> = utilities::subtract_lua_vec(flatpak_packages.iter().map(|x| x.to_string()).collect(), flatpak_table.clone());
 
     // Checking if we should actually remove the packages, if above the regular warn limit
     let mut should_remove_package : bool = true;
@@ -294,7 +150,7 @@ asdasdasd
         }
 
         yellow_ln!("Are you sure you want to remove the specified packages? [y/n]");
-        should_remove_package = get_confirmation();
+        should_remove_package = utilities::get_confirmation();
     }
 
     // TODO CHECK IF DIRECTORY EXISTS - ON FIRST RUN IT DOESNT!
@@ -306,10 +162,10 @@ asdasdasd
         let file_name = entry?.file_name().into_string().unwrap();
         entry_names.push(file_name);
     }
-    let aur_packages_to_remove = subtract_lua_vec(entry_names, aur_table.clone());
+    let aur_packages_to_remove = utilities::subtract_lua_vec(entry_names, aur_table.clone());
 
     for entry in aur_packages_to_remove {
-        remove_path(install_locations["Aur"].clone() + &entry)
+        utilities::remove_path(install_locations["Aur"].clone() + &entry)
     }
     
 
@@ -333,7 +189,7 @@ asdasdasd
                 //dep.arg(value);
             }
         
-            let success : bool = send_output(output);
+            let success : bool = utilities::send_output(output);
             if success {
                 green!("Removed: ");
                 white_ln!("{:?}", packages_to_remove);
@@ -352,7 +208,7 @@ asdasdasd
                 output.arg(value);
             }
 
-            let success = send_output(output);
+            let success = utilities::send_output(output);
             if success {
                 green!("Removed: ");
                 white_ln!("{:?}", flapak_packages_to_remove);
@@ -363,7 +219,7 @@ asdasdasd
             output.arg("--unused");
             if ASSUME_YES { output.arg("--assumeyes"); }
 
-            let _success = send_output(output);
+            let _success = utilities::send_output(output);
         }
 
         magenta!("Finished: ");
@@ -383,7 +239,7 @@ asdasdasd
     output.arg("pacman");
     output.arg("-Syu");
     if ASSUME_YES { output.arg("--noconfirm"); }
-    send_output(output);
+    utilities::send_output(output);
 
     green!("Installed: ");
     white_ln!("Upgraded System");
@@ -395,9 +251,9 @@ asdasdasd
 
             mlua::Value::String(string) => {
                 let string_str = string.to_str().unwrap();
-                if packages.contains(&string_str) {
-                    let index = packages.iter().position(|&r| r == string_str);
-                    packages.remove(index.unwrap());
+                if system_packages.contains(&string_str.to_string()) {
+                    let index = system_packages.iter().position(|r| r == string_str);
+                    system_packages.remove(index.unwrap());
                 } else {
                     white_ln!("Attempting to install {}", string_str);
 
@@ -422,7 +278,7 @@ asdasdasd
                     if is_group {
                         yellow_ln!("SKIPPING: The specified package of \"{}\" is a package group, which is not supported", string_str);
                         yellow_ln!("Please instead install the packages specified by the group. See specified packages? [y/n]");
-                        let see_packages = get_confirmation();
+                        let see_packages = utilities::get_confirmation();
                         if see_packages {
                             for value in out {
                                 yellow_ln!("{}", value);
@@ -437,7 +293,7 @@ asdasdasd
                     output.arg(string_str);
                     if ASSUME_YES { output.arg("--noconfirm"); }
 
-                    let success = send_output(output);
+                    let success = utilities::send_output(output);
                     if success {
                         green!("Installed: ");
                         white_ln!("{}", string_str);
@@ -459,10 +315,10 @@ asdasdasd
 
                 let string_str = string.to_str().unwrap();
 
-                if packages.contains(&string_str) {
+                if system_packages.contains(&string_str.to_string()) {
 
                     // Package is already installed - check for updates
-                    let index = packages.iter().position(|&r| r == string_str);
+                    let index = system_packages.iter().position(|r| r == string_str);
                     let directory = install_locations["Aur"].clone() + "/" + string_str; // Can lead to double slash instances but doesn't seem to do anything
                     
                     // Incase the install directory has changed or the folder was manually deleted
@@ -470,7 +326,7 @@ asdasdasd
                         std::fs::create_dir(&directory)?;
                     }
 
-                    let og_directory = get_current_directory();
+                    let og_directory = utilities::get_current_directory();
                     env::set_current_dir(directory)?;
 
                     let output = Command::new("git")
@@ -486,13 +342,13 @@ asdasdasd
                     
                     // Checking if already updated, if not, then build and continue
                     if String::from_utf8_lossy(&output.stdout) != "Already up to date.\n" {
-                        build_aur(string_str);
+                        aur::build_aur(string_str);
                     } else {
                         grey_ln!("(AUR) {} is already up to date", string_str);
                     }
 
                     env::set_current_dir(og_directory)?;
-                    packages.remove(index.unwrap());
+                    system_packages.remove(index.unwrap());
                     
                 } else {
                     // Package isn't installed, need to set it up and install it
@@ -519,9 +375,9 @@ asdasdasd
                         red_ln!("{:?}", String::from_utf8_lossy(&output.stderr));
                     }
 
-                    let og_directory = get_current_directory();
+                    let og_directory = utilities::get_current_directory();
                     env::set_current_dir(directory)?;
-                    build_aur(string_str);
+                    aur::build_aur(string_str);
                     env::set_current_dir(og_directory)?;
                 }
             },
@@ -550,7 +406,7 @@ asdasdasd
                     output.arg(string_str);
                     if ASSUME_YES { output.arg("--assumeyes"); }
 
-                    let success = send_output(output);
+                    let success = utilities::send_output(output);
                     if success {
                         green!("Installed: ");
                         white_ln!("{}", string_str);
@@ -696,7 +552,7 @@ asdasdasd
         }
 
         // Invalid symlink, banish it
-        remove_path(locations[0].to_string());
+        utilities::remove_path(locations[0].to_string());
     }
 
     //println!("Next");
@@ -727,7 +583,7 @@ asdasdasd
                     output.arg("-s");
                     output.arg(&original_dir);
                     output.arg(&link_dir);
-                    let res = send_output(output);
+                    let res = utilities::send_output(output);
 
                     match res {
                         false => {
