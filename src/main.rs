@@ -139,19 +139,6 @@ fn subtract_lua_vec(rust_table : Vec<String>, lua_table : mlua::Table) -> Vec<St
     return rust_table;
 }
 
-/*
-fn subtract_rust_vec(rust_table : Vec<String>, subtract_table : Vec<String>) -> Vec<String> {
-    let mut rust_table = rust_table;
-    for value in subtract_table.iter() {
-        if rust_table.contains(&value) {
-            let index = rust_table.iter().position(|r| r == value);
-            rust_table.remove(index.unwrap());
-        }
-    };
-
-    return rust_table;
-} */
-
 // Runs Commands, and displays the output and returns if successful
 fn send_output(mut output : Command) -> bool {
 
@@ -263,16 +250,7 @@ fn main() -> Result<(), mlua::Error> {
     cyan!("Starting: ");
     white_ln!("Removing packages");
 
-    // Get currently installed packages -- this one needs to use .output to get the stdout.
-    let output = Command::new("pacman")
-    .arg("-Qeq")
-    .output()
-    .expect("Failed to execute command");
-
-    if !output.status.success() {
-        println!("Unable to get list of installed packages, exiting.");
-        exit(1);
-    }
+asdasdasd
 
     // Get readable system packages
     let raw_packages: String = String::from_utf8(output.stdout).unwrap();
@@ -283,8 +261,6 @@ fn main() -> Result<(), mlua::Error> {
     let official_table: mlua::Table = packages_table.get("Official")?;
     let aur_table: mlua::Table = packages_table.get("Aur")?;
     let flatpak_table: mlua::Table = packages_table.get("Flatpak")?;
-
-    // SOMEHOW SET FLATPAK AS A REQUIRED DEPENDENCY, ALSO APPLICATION ID COLUMN DOESN'T SHOW FOR SOME REASON UNLESS YOU HAVE SOMETHING INSTALLED
 
     // flatpak packages
     let flatpak_packages = Command::new("flatpak")
