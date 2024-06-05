@@ -1,6 +1,7 @@
 use aur::{make_and_install_package, pull_package};
 use mlua::prelude::*;
-use std::{collections::HashMap, env, fs::{self, File, OpenOptions}, io::{Read, Write}, path::Path, process::Command};
+use save::overwrite_file;
+use std::{collections::HashMap, env, fs::{self}, path::Path, process::Command};
 use colour::*;
 
 mod globals;
@@ -9,6 +10,7 @@ mod official;
 mod aur;
 mod flatpak;
 mod symlinks;
+mod save;
 
 use globals::*;
 
@@ -297,44 +299,21 @@ fn main() -> Result<(), mlua::Error> {
     let save_exist = Path::new(&install_locations["Save"]).exists();
 
     // Extracted Content
-    let mut curent_symlinks: Vec<String> = Vec::new();
+    let mut current_symlinks: Vec<String> = Vec::new();
 
     if save_exist {
-        let mut file = OpenOptions::new()
-        .read(true)
-        .open(&install_locations["Save"])?;
-
-        let mut content = Vec::new();
-        file.read_to_end(&mut content)?;
-        let content_str = String::from_utf8_lossy(&content);
-
-        let elements: Vec<String> = content_str
-        .split(';')
-        .map(|s| s.trim_end_matches('\n').to_string())
-        .filter(|s: &String| !s.is_empty()) // Filter out empty strings
-        .collect();
+        let elements = save::read_file_elements(install_locations["Save"].clone());
 
         for value in elements {
             let identifier_bound = value.find('=').unwrap();
             let identifier = &value[..identifier_bound];
 
+            // Match Names to their respective implementations
             match identifier {
+
+                // Note that symlinks identifier can only appear once as it overwrites the previous vector
                 "symlinks" => {
-                    let remainder = &value[identifier_bound+2..value.len()-1]; // +2 to slice of the =[ and -1 to slice the ]
-                    //println!("Remainder: {}", remainder);
-
-                    let sub_elements: Vec<String> = remainder
-                    .split(',')
-                    .map(|s| s.to_string())
-                    .filter(|s: &String| !s.is_empty()) // Filter out empty strings
-
-                    .collect();
-
-                    for raw_path in sub_elements {
-                        //println!("Printing Raw Path: {}",raw_path);
-                        let path: &str =  &raw_path[1..raw_path.len()-1]; // remove speech marks
-                        curent_symlinks.push(path.to_string());
-                    }
+                    current_symlinks = symlinks::read_save(identifier_bound, value);
                 },
                 _ => {
                     red!("ERROR: ");
@@ -346,18 +325,8 @@ fn main() -> Result<(), mlua::Error> {
     } else {
         yellow!("Warning: ");
         white_ln!("No previous run save file detected, expected behaviour for first run, generating new file");
-        let res = File::create(&install_locations["Save"]);
 
-        match res {
-            Err(err)=> {
-                red!("ERROR: ");
-                white_ln!("Failed to create save file | {}", err);
-            },
-            _file => {
-                green!("Created: ");
-                white_ln!("config.king save file");
-            }
-        }
+        save::create_file_location(install_locations["Save"].clone());
     }
 
     magenta!("Finished: ");
@@ -372,7 +341,7 @@ fn main() -> Result<(), mlua::Error> {
     let new_symlinks: HashMap<String, String> = utilities::convert_lua_dictionary_to_hashmap_string(symlinks_table.clone());
 
     // Deleting previous symlinks
-    symlinks::delete_old_symlinks(curent_symlinks, new_symlinks);
+    symlinks::delete_old_symlinks(current_symlinks, new_symlinks);
 
     // Creating new symlinks
     let symlink_msg = symlinks::generate_symlinks(symlinks_table);
@@ -384,24 +353,7 @@ fn main() -> Result<(), mlua::Error> {
     cyan!("Starting: ");
     white_ln!("Updating Save File");
 
-    let mut file = OpenOptions::new()
-    .write(true)
-    .truncate(true)
-    .open("/home/pika/.config-king/save.king")?;
-
-    //println!("New save file: {}", symlink_msg);
-    let res = file.write_all(symlink_msg.as_bytes());
-
-    match res {
-        Err(err)=> {
-            red!("ERROR: ");
-            white_ln!("Failed to update save.king file | {}", err);
-        },
-        Ok(()) => {
-            green!("Updated: ");
-            white_ln!("save.king file with new cached information");
-        }
-    }
+    overwrite_file(install_locations["Save"].clone(), symlink_msg);
 
     magenta!("Finished: ");
     white_ln!("Updated Save File");

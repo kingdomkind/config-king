@@ -103,3 +103,22 @@ pub fn delete_old_symlinks(curent_symlinks: Vec<String>,  new_symlinks: HashMap<
         utilities::remove_path(locations[0].to_string());
     }
 }
+
+pub fn read_save(identifier_bound: usize, value: String) -> Vec<String> {
+    let remainder = &value[identifier_bound+2..value.len()-1]; // +2 to slice of the =[ and -1 to slice the ]
+    let mut current_symlinks: Vec<String> = Vec::new();
+
+    let sub_elements: Vec<String> = remainder
+    .split(',')
+    .map(|s| s.to_string())
+    .filter(|s: &String| !s.is_empty()) // Filter out empty strings
+    .collect();
+
+    for raw_path in sub_elements {
+        //println!("Printing Raw Path: {}",raw_path);
+        let path: &str =  &raw_path[1..raw_path.len()-1]; // remove speech marks
+        current_symlinks.push(path.to_string());
+    }
+
+    return current_symlinks;
+}
