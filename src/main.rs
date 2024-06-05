@@ -1,7 +1,7 @@
 use aur::{make_and_install_package, pull_package};
 use mlua::prelude::*;
 use save::overwrite_file;
-use std::{collections::HashMap, env, fs::{self}, path::Path, process::Command};
+use std::{collections::HashMap, env, fs, path::Path, process::Command, time::Instant};
 use colour::*;
 
 mod globals;
@@ -39,6 +39,9 @@ Magenta - Finished section
 
 // Main Function
 fn main() -> Result<(), mlua::Error> {
+
+    // Begin time tracking
+    let time = Instant::now();
 
     let mut arguments: Vec<String> = env::args().collect();
     arguments.remove(0);
@@ -359,7 +362,8 @@ fn main() -> Result<(), mlua::Error> {
     white_ln!("Updated Save File");
 
     // Everything done, we can exit
+    let elapsed_time: f32 = (time.elapsed().as_millis() as f32) / 1000.0;
     magenta!("Finished: ");
-    white_ln!("Completed all tasks");
+    white_ln!("Completed all tasks in {}s", format!("{:.2}",elapsed_time));
     Ok(())
 }
