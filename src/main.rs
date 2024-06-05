@@ -1,6 +1,6 @@
 use aur::{make_and_install_package, pull_package};
 use mlua::prelude::*;
-use std::{collections::HashMap, env, fs::{self, File, OpenOptions}, io::{Read, Write},path::Path, process::Command, vec};
+use std::{collections::HashMap, env, fs::{self, File, OpenOptions}, io::{Read, Write}, path::Path, process::Command};
 use colour::*;
 
 mod globals;
@@ -8,6 +8,7 @@ mod utilities;
 mod official;
 mod aur;
 mod flatpak;
+mod symlinks;
 
 use globals::*;
 
@@ -176,7 +177,7 @@ fn main() -> Result<(), mlua::Error> {
     white_ln!("Upgrading System");
     
     // Upgrade System
-    official::upgrade_system();
+    official::upgrade_all_packages();
 
     green!("Installed: ");
     white_ln!("Upgraded System");
@@ -296,7 +297,7 @@ fn main() -> Result<(), mlua::Error> {
     let save_exist = Path::new(&install_locations["Save"]).exists();
 
     // Extracted Content
-    let mut symlink_vec: Vec<String> = Vec::new();
+    let mut curent_symlinks: Vec<String> = Vec::new();
 
     if save_exist {
         let mut file = OpenOptions::new()
@@ -332,7 +333,7 @@ fn main() -> Result<(), mlua::Error> {
                     for raw_path in sub_elements {
                         //println!("Printing Raw Path: {}",raw_path);
                         let path: &str =  &raw_path[1..raw_path.len()-1]; // remove speech marks
-                        symlink_vec.push(path.to_string());
+                        curent_symlinks.push(path.to_string());
                     }
                 },
                 _ => {
@@ -367,103 +368,14 @@ fn main() -> Result<(), mlua::Error> {
     white_ln!("Regenerating Symlinks");
 
     let symlinks_table: mlua::Table = globals.get("Symlinks")?;
-    let mut new_symlinks: HashMap<String, String> = HashMap::new();
-
     // Get Current symlinks as rust hash map
-    for pair in symlinks_table.clone().pairs::<mlua::Value, mlua::Value>() {
-        let (key, value) = pair?;
-        match &value {
-
-            mlua::Value::String(_string) => {
-                new_symlinks.insert(key.to_string().unwrap(), value.to_string().unwrap());
-            },
-
-            _ => (),
-
-        }
-    }
+    let new_symlinks: HashMap<String, String> = utilities::convert_lua_dictionary_to_hashmap_string(symlinks_table.clone());
 
     // Deleting previous symlinks
-    for value in symlink_vec {
-        let locations: Vec<String> = value
-        .split('=')
-        .map(|s| s.to_string())
-        .collect();
-
-        // Check if the symlink already exists, is valid, and if so skip this loop
-        if Path::new(&locations[0]).exists() {
-            if new_symlinks.contains_key(&locations[0]) {
-                let metadata = fs::symlink_metadata(&locations[0])?;
-                if metadata.file_type().is_symlink() {
-                    if new_symlinks[&locations[0]] == locations[1] {
-                        continue;
-                    }
-                }
-            }
-        }
-
-        // Invalid symlink, banish it
-        utilities::remove_path(locations[0].to_string());
-    }
+    symlinks::delete_old_symlinks(curent_symlinks, new_symlinks);
 
     // Creating new symlinks
-    let mut symlink_msg = String::from("symlinks=[");
-
-    for pair in symlinks_table.pairs::<mlua::Value, mlua::Value>() {
-        let (key, value) = pair?;
-        match value {
-
-            mlua::Value::String(string) => {
-
-                let string_str = string.to_str().unwrap();
-                let original_dir =  string_str.to_string();
-                let link_dir = key.to_string().unwrap();
-                let symlink_dir = link_dir.clone() + "=" + &original_dir;
-                let mut already_exist = false;
-
-                if Path::new(&link_dir).exists() {
-                    let metadata = fs::symlink_metadata(&link_dir)?;
-                    already_exist = metadata.file_type().is_symlink();
-                }
-
-                if !already_exist { // Only create the symlink if there's not already one there, we confirmed it was valid in the removal process
-
-                    let mut output = Command::new("sudo");
-                    output.arg("ln");
-                    output.arg("-s");
-                    output.arg(&original_dir);
-                    output.arg(&link_dir);
-                    let res = utilities::send_output(output);
-
-                    match res {
-                        false => {
-                            red!("ERROR: ");
-                            white_ln!("Failed to create symlink from {} to {}", link_dir, original_dir);
-                            continue;
-                        },
-                        true => {
-                            green!("Created: ");
-                            white_ln!("Symlink at {} which targets {}", link_dir, original_dir);
-                        }
-                    }
-                }
-
-                // Update Msg
-                symlink_msg.push_str("\"");
-                symlink_msg.push_str(&symlink_dir);
-                symlink_msg.push_str("\","); 
-            },
-
-            _ => (),
-
-        }
-    }
-
-    // Remove the trailing comma unless the list is empty, then skip
-    if symlink_msg.chars().last() != Some('[') {
-        symlink_msg.pop();
-    }
-    symlink_msg.push_str("];");
+    let symlink_msg = symlinks::generate_symlinks(symlinks_table);
 
     magenta!("Finished: ");
     white_ln!("Managed all Symlinks");

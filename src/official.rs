@@ -43,7 +43,7 @@ pub fn remove_system_packages(package_names: Vec<String>) {
     }
 }
 
-pub fn upgrade_system() {
+pub fn upgrade_all_packages() {
     let mut output = Command::new("sudo");
     output.arg("pacman");
     output.arg("-Syu");

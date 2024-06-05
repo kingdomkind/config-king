@@ -1,4 +1,4 @@
-use std::{io, path::Path, process::{exit, Command}};
+use std::{collections::HashMap, io, path::Path, process::{exit, Command}};
 use super::globals::*;
 use colour::*;
 
@@ -140,4 +140,23 @@ pub fn subtract_lua_vec(rust_table : Vec<String>, lua_table : mlua::Table) -> Ve
     };
 
     return rust_table;
+}
+
+pub fn convert_lua_dictionary_to_hashmap_string(lua_string_dictionary: mlua::Table) -> HashMap<String, String> {
+    let mut hashmap: HashMap<String, String> = HashMap::new();
+
+    for pair in lua_string_dictionary.pairs::<mlua::Value, mlua::Value>() {
+        let (key, value) = pair.unwrap();
+        match &value {
+
+            mlua::Value::String(_string) => {
+                hashmap.insert(key.to_string().unwrap(), value.to_string().unwrap());
+            },
+
+            _ => (),
+
+        }
+    }
+
+    return hashmap;
 }
