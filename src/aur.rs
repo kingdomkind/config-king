@@ -90,17 +90,28 @@ pub fn make_and_install_package(aur_location: String, packages: Vec<String>) {
     let possible_pkgs = String::from_utf8(output.stdout).unwrap();
     let possible_pkgs: Vec<&str> = possible_pkgs.split("\n").filter(|x| x.contains(".pkg.tar.zst")).collect();
 
-    let mut output = Command::new("sudo");
+    let mut output = Command::new("sudo"); // Issue - base package may NOT be the one you want to install, string pattern matching of .contains isn't good enough
     output.arg("pacman");
     output.arg("-U");
-    for option in possible_pkgs {
-        for package in &packages {
+
+    for package in &packages {
+        println!("User wants to install {}", package);
+        let mut best_package: &str = "";
+        let mut best_length = 9999;
+
+        for option in &possible_pkgs {
             if option.contains(package) {
-                println!("Aur install of {}", option);
-                output.arg(option);
+                if option.len() < best_length {
+                    best_package = option;
+                    best_length = option.len();
+                }
             }
         }
-    }    
+
+        println!("Aur install of {}", best_package);
+        output.arg(best_package);
+    }
+
     if ASSUME_YES { output.arg("--noconfirm"); }
 
     let success = utilities::send_output(output);
