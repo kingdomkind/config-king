@@ -90,29 +90,24 @@ pub fn make_and_install_package(aur_location: String, packages: Vec<String>) {
     let possible_pkgs = String::from_utf8(output.stdout).unwrap();
     let possible_pkgs: Vec<&str> = possible_pkgs.split("\n").filter(|x| x.contains(".pkg.tar.zst")).collect();
 
+    let mut output = Command::new("sudo");
+    output.arg("pacman");
+    output.arg("-U");
     for option in possible_pkgs {
-        println!("Filtered packages{}", option);
-
         for package in &packages {
             if option.contains(package) {
-                let mut output = Command::new("sudo");
-                output.arg("pacman");
-                output.arg("-U");
+                println!("Aur install of {}", option);
                 output.arg(option);
-                if ASSUME_YES { output.arg("--noconfirm"); }
-            
-                let success = utilities::send_output(output);
-                if success {
-                    green!("Installed: ");
-                    white_ln!("(AUR) {} ({})", package, option);
-                }
             }
         }
+    }    
+    if ASSUME_YES { output.arg("--noconfirm"); }
+
+    let success = utilities::send_output(output);
+    if success {
+        green!("Installed: ");
+        white_ln!("(AUR) {}", packages[0]);
     }
-
-
-
-
 
     let _ = env::set_current_dir(og_directory);
 }
