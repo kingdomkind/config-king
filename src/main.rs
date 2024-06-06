@@ -247,7 +247,7 @@ fn main() -> Result<(), mlua::Error> {
                     } else {
                         install_required = false;
                         let needs_update = pull_package(install_locations["Aur"].clone(), string_str.to_string());
-                        if needs_update { make_and_install_package(install_locations["Aur"].clone(), string_str.to_string()) }
+                        if needs_update { make_and_install_package(install_locations["Aur"].clone(), vec![string_str.to_string()]) }
                         system_packages.remove(index.unwrap());
                     }
                 }
@@ -261,7 +261,7 @@ fn main() -> Result<(), mlua::Error> {
 
                     white_ln!("(AUR) Attempting to install {}", string_str);
                     aur::clone_package(install_locations["Aur"].clone(), string_str.to_string());
-                    aur::make_and_install_package(install_locations["Aur"].clone(), string_str.to_string())
+                    aur::make_and_install_package(install_locations["Aur"].clone(), vec![string_str.to_string()])
                 }
             },
 

@@ -65,22 +65,54 @@ pub fn clone_package(aur_location: String, package: String) {
     let _ = env::set_current_dir(og_directory);
 }
 
-pub fn make_and_install_package(aur_location: String, package: String) {
+pub fn make_and_install_package(aur_location: String, packages: Vec<String>) {
 
+    // We assume the first value in packages is the base package
     let og_directory = utilities::get_current_directory();
-    let _ = env::set_current_dir(aur_location + "/" + &package);
+    let _ = env::set_current_dir(aur_location + "/" + &packages[0]);
 
-    white_ln!("(AUR) Building {}", package);
+    white_ln!("(AUR) Building {}", packages[0]);
 
     let mut output = Command::new("makepkg");
-    output.arg("-si");
+    output.arg("-s");
     if ASSUME_YES { output.arg("--noconfirm"); }
 
     let success = utilities::send_output(output);
     if success {
-        green!("Installed: ");
-        white_ln!("(AUR) {}", package);
+        green!("Built: ");
+        white_ln!("(AUR) {}", packages[0]);
     }
+
+    let output = Command::new("ls")
+    .output()
+    .expect("Failed to execute command");
+
+    let possible_pkgs = String::from_utf8(output.stdout).unwrap();
+    let possible_pkgs: Vec<&str> = possible_pkgs.split("\n").filter(|x| x.contains(".pkg.tar.zst")).collect();
+
+    for option in possible_pkgs {
+        println!("Filtered packages{}", option);
+
+        for package in &packages {
+            if option.contains(package) {
+                let mut output = Command::new("sudo");
+                output.arg("pacman");
+                output.arg("-U");
+                output.arg(option);
+                if ASSUME_YES { output.arg("--noconfirm"); }
+            
+                let success = utilities::send_output(output);
+                if success {
+                    green!("Installed: ");
+                    white_ln!("(AUR) {} ({})", package, option);
+                }
+            }
+        }
+    }
+
+
+
+
 
     let _ = env::set_current_dir(og_directory);
 }
