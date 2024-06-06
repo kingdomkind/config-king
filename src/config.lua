@@ -12,16 +12,21 @@ Packages = {
         "networkmanager",
         "openssh",
         "rustup",
-	    "gst-plugin-pipewire",
-	    "pipewire",
-	    "pipewire-alsa",
-	    "pipewire-jack",
-	    "pipewire-pulse",
-	    "wireplumber",
-	    "zram-generator",
+        "gst-plugin-pipewire",
+        "pipewire",
+        "pipewire-alsa",
+        "pipewire-jack",
+        "pipewire-pulse",
+        "wireplumber",
+        "zram-generator",
     },
 
     Aur = {
+        --> Regular Example
+        "downgrade",
+        --> Example where the base package installs additional packages
+        --> Base pkg name first     then the additional packages to install follows (ie. the other ones in the pkg name)
+        {"nvidia-utils-beta",       "opencl-nvidia-beta", "nvidia-settings-beta"},
     },
 
     Flatpak = {
