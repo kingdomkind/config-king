@@ -228,44 +228,58 @@ fn main() -> Result<(), mlua::Error> {
     // Installing AUR packages
     for pair in aur_table.pairs::<mlua::Value, mlua::Value>() {
         let (_key, val) = pair?;
-        match val {
 
-            mlua::Value::String(string) => {
+        let mut packages: Vec<String> = Vec::new();
 
-                let string_str = string.to_str().unwrap();
-                let mut install_required = true;
+        if val.is_string() {
+            packages.push(val.to_string().unwrap());
+        }
 
-                if system_packages.contains(&string_str.to_string()) {
+        if val.is_table() {
+            let val = val.as_table().unwrap().clone().pairs::<mlua::Value, mlua::Value>();
 
-                    // Package is already installed - check for updates
-                    let index = system_packages.iter().position(|r| r == string_str);
-                    let directory = install_locations["Aur"].clone() + "/" + string_str; // Can lead to double slash instances but doesn't seem to do anything
+            for secondary_pair in val {
+                let (_secondary_key, secondary_val) = secondary_pair?;
+                packages.push(secondary_val.to_string().unwrap());
+            }
+        }
+
+        let mut install_required = true;
+        let mut all_pkgs_installed = true;
+
+        for package in &packages {
+            if !system_packages.contains(&package) {
+                all_pkgs_installed = false;
+            }
+        }
+
+        if all_pkgs_installed {
+
+            // Package is already installed - check for updates
+            let index = system_packages.iter().position(|r| *r == packages[0]);
+            let directory = install_locations["Aur"].clone() + "/" + &packages[0]; // Can lead to double slash instances but doesn't seem to do anything
                     
-                    // Incase the install directory has changed or the folder was manually deleted
-                    if !std::path::Path::new(&directory).exists() {
-                        std::fs::create_dir(&directory)?;
-                    } else {
-                        install_required = false;
-                        let needs_update = pull_package(install_locations["Aur"].clone(), string_str.to_string());
-                        if needs_update { make_and_install_package(install_locations["Aur"].clone(), vec![string_str.to_string()]) }
-                        system_packages.remove(index.unwrap());
-                    }
-                }
+            // Incase the install directory has changed or the folder was manually deleted
+            if !std::path::Path::new(&directory).exists() {
+                std::fs::create_dir(&directory)?;
+            } else {
+                install_required = false;
+                let needs_update = pull_package(install_locations["Aur"].clone(), packages[0].clone());
+                if needs_update { make_and_install_package(install_locations["Aur"].clone(), packages.clone()) }
+                system_packages.remove(index.unwrap());
+            }
+        }
 
-                if install_required == true {
-                    // Package isn't installed, need to set it up and install it
-                    if !install_locations.contains_key("Aur") {
-                        yellow_ln!("(AUR) Unable to install {} as the install location was not specified.", string_str);
-                        continue;
-                    }
+        if install_required == true {
+            // Package isn't installed, need to set it up and install it
+            if !install_locations.contains_key("Aur") {
+                yellow_ln!("(AUR) Unable to install {} as the install location was not specified.", packages[0]);
+                continue;
+            }
 
-                    white_ln!("(AUR) Attempting to install {}", string_str);
-                    aur::clone_package(install_locations["Aur"].clone(), string_str.to_string());
-                    aur::make_and_install_package(install_locations["Aur"].clone(), vec![string_str.to_string()])
-                }
-            },
-
-            _ => (),
+            white_ln!("(AUR) Attempting to install {}", packages[0]);
+            aur::clone_package(install_locations["Aur"].clone(), packages[0].clone());
+            aur::make_and_install_package(install_locations["Aur"].clone(), packages.clone());
         }
     }
 
