@@ -39,7 +39,10 @@ pub fn remove_system_packages(package_names: Vec<String>) {
         if success {
             green!("Removed: ");
             white_ln!("{:?}", package_names);
-        } 
+        } else {
+            yellow!("Warning: ");
+            white_ln!("Failed to remove {:?}", package_names);
+        }
     }
 }
 
@@ -79,4 +82,49 @@ pub fn get_packages_in_group(package: String) -> Vec<String> {
     let out : Vec<String> = utilities::vec_str_to_string(raw_out.lines().collect());
     
     return out;
+}
+
+pub fn subtract_vec(rust_table : Vec<String>, lua_table : mlua::Table) -> Vec<String> {
+
+    let mut rust_table = rust_table;
+    
+    for pair in lua_table.pairs::<mlua::Value, mlua::Value>() {
+        let Ok((_key, value)) = pair else { panic!() };
+
+        let mut temp: Vec<String> = Vec::new();
+
+        if value.is_string() {
+            temp.push(value.to_string().unwrap());
+        }
+
+        if value.is_table() {
+            let value = value.as_table().unwrap().clone().pairs::<mlua::Value, mlua::Value>();
+
+            for secondary_pair in value {
+                let (secondary_key, secondary_val) = secondary_pair.unwrap();
+                let secondary_key = secondary_key.to_string().unwrap();
+
+                if secondary_key.as_str() == "sub" {
+                    let secondary_val = secondary_val.as_table().unwrap();
+
+                    for tertiary_pair in secondary_val.clone().pairs::<mlua::Value, mlua::Value>() {
+                        let (_tertiary_key, tertiary_val) = tertiary_pair.unwrap();
+                        let tertiary_val = tertiary_val.to_string().unwrap();
+                        temp.push(tertiary_val.clone());
+                    }
+                }
+            }
+        }
+
+        for package in temp {
+            if rust_table.contains(&package) {
+                let index = rust_table.iter().position(|r| *r == package);
+                rust_table.remove(index.unwrap());
+            } else {
+                println!("Didnt contian {}", package);
+            }
+        }
+    };
+
+    return rust_table;
 }

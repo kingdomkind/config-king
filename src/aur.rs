@@ -13,9 +13,39 @@ pub fn remove_uninstalled_aur_directories(aur_table : mlua::Table, aur_location 
         let file_name = entry.unwrap().file_name().into_string().unwrap();
         entry_names.push(file_name);
     }
-    let aur_packages_to_remove = utilities::subtract_lua_vec(entry_names, aur_table.clone());
+    
+    for pair in aur_table.pairs::<mlua::Value, mlua::Value>() {
+        let Ok((_key, value)) = pair else { panic!() };
+        let mut temp: Vec<String> = Vec::new();
 
-    for entry in aur_packages_to_remove {
+        if value.is_string() {
+            temp.push(value.to_string().unwrap());
+        }
+
+        if value.is_table() {
+            let value = value.as_table().unwrap().clone().pairs::<mlua::Value, mlua::Value>();
+
+            for secondary_pair in value {
+                let (secondary_key, secondary_val) = secondary_pair.unwrap();
+                let secondary_key = secondary_key.to_string().unwrap();
+
+                if secondary_key.as_str() == "base" {
+                    let secondary_val = secondary_val.to_string().unwrap();
+                    temp.push(secondary_val);
+                }
+            }
+        }
+
+        for package in temp {
+            if entry_names.contains(&package) {
+                let index = entry_names.iter().position(|r| *r == package);
+                entry_names.remove(index.unwrap());
+
+            }
+        }
+    }
+
+    for entry in entry_names {
         utilities::remove_path(aur_location.to_owned() + &entry);
     }   
 }
@@ -65,13 +95,13 @@ pub fn clone_package(aur_location: String, package: String) {
     let _ = env::set_current_dir(og_directory);
 }
 
-pub fn make_and_install_package(aur_location: String, packages: Vec<String>) {
+pub fn make_and_install_package(aur_location: String, base_package: String, sub_packages: Vec<String>) {
 
     // We assume the first value in packages is the base package
     let og_directory = utilities::get_current_directory();
-    let _ = env::set_current_dir(aur_location + "/" + &packages[0]);
+    let _ = env::set_current_dir(aur_location + "/" + &base_package);
 
-    white_ln!("(AUR) Building {}", packages[0]);
+    white_ln!("(AUR) Building {}", base_package);
 
     let mut output = Command::new("makepkg");
     output.arg("-s");
@@ -80,7 +110,7 @@ pub fn make_and_install_package(aur_location: String, packages: Vec<String>) {
     let success = utilities::send_output(output);
     if success {
         green!("Built: ");
-        white_ln!("(AUR) {}", packages[0]);
+        white_ln!("(AUR) {}", base_package);
     }
 
     let output = Command::new("ls")
@@ -94,7 +124,7 @@ pub fn make_and_install_package(aur_location: String, packages: Vec<String>) {
     output.arg("pacman");
     output.arg("-U");
 
-    for package in &packages {
+    for package in &sub_packages {
         println!("User wants to install {}", package);
         let mut best_package: &str = "";
         let mut best_length = 9999;
@@ -117,7 +147,7 @@ pub fn make_and_install_package(aur_location: String, packages: Vec<String>) {
     let success = utilities::send_output(output);
     if success {
         green!("Installed: ");
-        white_ln!("(AUR) {}", packages[0]);
+        white_ln!("(AUR) {}", base_package);
     }
 
     let _ = env::set_current_dir(og_directory);

@@ -120,39 +120,6 @@ pub fn remove_path(path : String) {
     }
 }
 
-pub fn subtract_lua_vec(rust_table : Vec<String>, lua_table : mlua::Table) -> Vec<String> {
-
-    let mut rust_table = rust_table;
-    
-    for pair in lua_table.pairs::<mlua::Value, mlua::Value>() {
-        let Ok((_key, value)) = pair else { panic!() };
-
-        let mut temp: Vec<String> = Vec::new();
-
-        if value.is_string() {
-            temp.push(value.to_string().unwrap());
-        }
-
-        if value.is_table() {
-            let value = value.as_table().unwrap().clone().pairs::<mlua::Value, mlua::Value>();
-
-            for secondary_pair in value {
-                let (_secondary_key, secondary_val) = secondary_pair.unwrap();
-                temp.push(secondary_val.to_string().unwrap());
-            }
-        }
-
-        for package in temp {
-            if rust_table.contains(&package) {
-                let index = rust_table.iter().position(|r| *r == package);
-                rust_table.remove(index.unwrap());
-            }
-        }
-    };
-
-    return rust_table;
-}
-
 pub fn convert_lua_dictionary_to_hashmap_string(lua_string_dictionary: mlua::Table) -> HashMap<String, String> {
     let mut hashmap: HashMap<String, String> = HashMap::new();
 

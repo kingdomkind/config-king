@@ -143,9 +143,9 @@ fn main() -> Result<(), mlua::Error> {
     white_ln!("Removing packages");
 
     // Getting packages to remove
-    let mut packages_to_remove = utilities::subtract_lua_vec(system_packages.clone(), official_table.clone());
-    packages_to_remove = utilities::subtract_lua_vec(packages_to_remove, aur_table.clone());
-    let flatpak_packages_to_remove: Vec<String> = utilities::subtract_lua_vec(flatpak_packages.clone(), flatpak_table.clone());
+    let mut packages_to_remove = official::subtract_vec(system_packages.clone(), official_table.clone());
+    packages_to_remove = official::subtract_vec(packages_to_remove, aur_table.clone());
+    let flatpak_packages_to_remove: Vec<String> = flatpak::subtract_vec(flatpak_packages.clone(), flatpak_table.clone());
 
     // Checking if we should actually remove the packages, if above the regular warn limit
     let mut should_remove_package : bool = true;
@@ -229,25 +229,46 @@ fn main() -> Result<(), mlua::Error> {
     for pair in aur_table.pairs::<mlua::Value, mlua::Value>() {
         let (_key, val) = pair?;
 
-        let mut packages: Vec<String> = Vec::new();
+        let mut sub_packages: Vec<String> = Vec::new();
+        let mut base_package: String = String::new();
 
         if val.is_string() {
-            packages.push(val.to_string().unwrap());
+            sub_packages.push(val.to_string().unwrap());
+            base_package = val.to_string().unwrap();
         }
 
         if val.is_table() {
             let val = val.as_table().unwrap().clone().pairs::<mlua::Value, mlua::Value>();
 
             for secondary_pair in val {
-                let (_secondary_key, secondary_val) = secondary_pair?;
-                packages.push(secondary_val.to_string().unwrap());
+                let (secondary_key, secondary_val) = secondary_pair?;
+                let secondary_key = secondary_key.to_string().unwrap();
+
+                match secondary_key.as_str() {
+                    "base" => {
+                        let secondary_val = secondary_val.to_string().unwrap();
+                        base_package = secondary_val;
+                    },
+
+                    "sub" => {
+                        let secondary_val = secondary_val.as_table().unwrap();
+
+                        for tertiary_pair in secondary_val.clone().pairs::<mlua::Value, mlua::Value>() {
+                            let (_tertiary_key, tertiary_val) = tertiary_pair?;
+                            let tertiary_val = tertiary_val.to_string().unwrap();
+                            sub_packages.push(tertiary_val);
+                        }
+                    }
+
+                    _ => {},
+                }
             }
         }
 
         let mut install_required = true;
         let mut all_pkgs_installed = true;
 
-        for package in &packages {
+        for package in &sub_packages {
             if !system_packages.contains(&package) {
                 all_pkgs_installed = false;
             }
@@ -256,30 +277,30 @@ fn main() -> Result<(), mlua::Error> {
         if all_pkgs_installed {
 
             // Package is already installed - check for updates
-            let index = system_packages.iter().position(|r| *r == packages[0]);
-            let directory = install_locations["Aur"].clone() + "/" + &packages[0]; // Can lead to double slash instances but doesn't seem to do anything
+            //let index = system_packages.iter().position(|r| *r == base_package);
+            let directory = install_locations["Aur"].clone() + "/" + &base_package; // Can lead to double slash instances but doesn't seem to do anything
                     
             // Incase the install directory has changed or the folder was manually deleted
             if !std::path::Path::new(&directory).exists() {
                 std::fs::create_dir(&directory)?;
             } else {
                 install_required = false;
-                let needs_update = pull_package(install_locations["Aur"].clone(), packages[0].clone());
-                if needs_update { make_and_install_package(install_locations["Aur"].clone(), packages.clone()) }
-                system_packages.remove(index.unwrap());
+                let needs_update = pull_package(install_locations["Aur"].clone(), base_package.clone());
+                if needs_update { make_and_install_package(install_locations["Aur"].clone(), base_package.clone(), sub_packages.clone()) }
+                //system_packages.remove(index.unwrap());
             }
         }
 
         if install_required == true {
             // Package isn't installed, need to set it up and install it
             if !install_locations.contains_key("Aur") {
-                yellow_ln!("(AUR) Unable to install {} as the install location was not specified.", packages[0]);
+                yellow_ln!("(AUR) Unable to install {} as the install location was not specified.", base_package);
                 continue;
             }
 
-            white_ln!("(AUR) Attempting to install {}", packages[0]);
-            aur::clone_package(install_locations["Aur"].clone(), packages[0].clone());
-            aur::make_and_install_package(install_locations["Aur"].clone(), packages.clone());
+            white_ln!("(AUR) Attempting to install {}", base_package);
+            aur::clone_package(install_locations["Aur"].clone(), base_package.clone());
+            aur::make_and_install_package(install_locations["Aur"].clone(), base_package.clone(), sub_packages.clone());
         }
     }
 
