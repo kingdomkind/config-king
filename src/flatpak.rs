@@ -54,6 +54,13 @@ pub fn install_packages(package_names: Vec<String>) {
     }
 }
 
+pub fn upgrade_all_packages() {
+    let mut output = Command::new("flatpak");
+    output.arg("update");
+    if ASSUME_YES { output.arg("--assumeyes"); }
+    utilities::send_output(output);
+}
+
 pub fn subtract_vec(rust_table : Vec<String>, lua_table : mlua::Table) -> Vec<String> {
 
     let mut rust_table = rust_table;

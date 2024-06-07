@@ -183,6 +183,7 @@ fn main() -> Result<(), mlua::Error> {
     
     // Upgrade System
     official::upgrade_all_packages();
+    flatpak::upgrade_all_packages();
 
     green!("Installed: ");
     white_ln!("Upgraded System");
@@ -324,8 +325,6 @@ fn main() -> Result<(), mlua::Error> {
 
         }
     }
-
-    // UPDATE ALL FLATPAKS NOW!
 
     magenta!("Finished: ");
     white_ln!("Installed all intended packages");
