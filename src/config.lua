@@ -2,7 +2,7 @@
 
 Packages = {
     Official = {
-        "nano",
+        "vim",
         "base",
         "base-devel",
         "git",
@@ -24,12 +24,28 @@ Packages = {
     Aur = {
         --> Regular Example
         "downgrade",
-        --> Example where the base package installs additional packages
-        --> Base pkg name first     then the additional packages to install follows (ie. the other ones in the pkg name)
-        {"nvidia-utils-beta",       "opencl-nvidia-beta", "nvidia-settings-beta"},
+
+        --> Example where the base package installs additional packages (ie. base packages and sub-packages)
+        {
+            --> Base package name (ie. the one to clone from on the AUR)
+            ["base"] = "nvidia-utils-beta",
+            --> Sub packages to install from the base package, note the nvidia-utils-beta package is not automatically installed
+            ["sub"] = {"nvidia-utils-beta", "opencl-nvidia-beta", "nvidia-settings-beta"},
+        },
+
+        --> Example where you want to install a PKGBUILD not from the AUR, but from a custom git link
+        {
+            --> Base package name (needs to be the same name as the project, ie. the folder name)
+            ["base"] = "Rust-VPN-Handler",
+            --> Sub packages, as previous example also showed
+            ["sub"] = {"vpn_handler"},
+            --> url to download from. If it is omitted, it is assumed to be an AUR package
+            ["url"] = "https://github.com/kingdomkind/Rust-VPN-Handler.git"
+        }
     },
 
     Flatpak = {
+        "com.bitwarden.desktop",
     },
 }
 

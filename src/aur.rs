@@ -76,20 +76,21 @@ pub fn pull_package(aur_location: String, package: String) -> bool {
     }
 }
 
-pub fn clone_package(aur_location: String, package: String) {
+pub fn clone_package(aur_location: String, package: String, url: String) {
     let og_directory = utilities::get_current_directory();
     let _ = env::set_current_dir(aur_location);
 
-    let output = Command::new("git")
-    .arg("clone")
-    .arg("https://aur.archlinux.org/".to_owned() + &package + ".git")
-    .output()
-    .expect("Failed to execute command");
-
-    if output.status.success() {
-        white_ln!("(AUR) Cloned {}", package);
+    let mut output = Command::new("git");
+    output.arg("clone");
+    if String::is_empty(&url) {
+        output.arg("https://aur.archlinux.org/".to_owned() + &package + ".git");
     } else {
-        red_ln!("{:?}", String::from_utf8_lossy(&output.stderr));
+        output.arg(url);
+    }
+    let success = utilities::send_output(output);
+
+    if success {
+        white_ln!("(AUR) Cloned {}", package);
     }
 
     let _ = env::set_current_dir(og_directory);

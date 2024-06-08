@@ -232,6 +232,7 @@ fn main() -> Result<(), mlua::Error> {
 
         let mut sub_packages: Vec<String> = Vec::new();
         let mut base_package: String = String::new();
+        let mut url: String = String::new();
 
         if val.is_string() {
             sub_packages.push(val.to_string().unwrap());
@@ -261,6 +262,11 @@ fn main() -> Result<(), mlua::Error> {
                         }
                     }
 
+                    "url" => {
+                        let secondary_val = secondary_val.to_string().unwrap();
+                        url = secondary_val;
+                    }
+
                     _ => {},
                 }
             }
@@ -288,7 +294,6 @@ fn main() -> Result<(), mlua::Error> {
                 install_required = false;
                 let needs_update = pull_package(install_locations["Aur"].clone(), base_package.clone());
                 if needs_update { make_and_install_package(install_locations["Aur"].clone(), base_package.clone(), sub_packages.clone()) }
-                //system_packages.remove(index.unwrap());
             }
         }
 
@@ -300,7 +305,7 @@ fn main() -> Result<(), mlua::Error> {
             }
 
             white_ln!("(AUR) Attempting to install {}", base_package);
-            aur::clone_package(install_locations["Aur"].clone(), base_package.clone());
+            aur::clone_package(install_locations["Aur"].clone(), base_package.clone(), url);
             aur::make_and_install_package(install_locations["Aur"].clone(), base_package.clone(), sub_packages.clone());
         }
     }
