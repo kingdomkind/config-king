@@ -1,5 +1,5 @@
 # config-king
-An easy way to manage your arch-linux system.
+An easy way to declaratively manage your arch system.
 
 ## What Is It?
 config-king is a script which allows you to manage your arch (or arch based) systems through a configuration file written in lua, similar to how it works on nixos (but significantly more limited in scope). It is only intended to allow you to install packages from arch repos, AUR, flatpaks and any custom git links with PKGBUILDs, although more functionality for build hooks is planned in future so the user can customise it with lua.
