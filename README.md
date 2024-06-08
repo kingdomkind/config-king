@@ -2,20 +2,25 @@
 An easy way to manage your arch-linux system.
 
 ## What Is It?
-config-king is a package which allows you to manage your arch (or arch based) systems through a configuration file written in lua, similar to how it works on nixos (but significantly more limited in scope).
+config-king is a script which allows you to manage your arch (or arch based) systems through a configuration file written in lua, similar to how it works on nixos (but significantly more limited in scope). It is only intended to allow you to install packages from arch repos, AUR, flatpaks and any custom git links with PKGBUILDs, although more functionality for build hooks is planned in future so the user can customise it with lua.
 
-## What are the limitations / capabilities?
-config-king is only intended to allow you to install packages from the Arch repos, AUR and flatpaks. Beyond this, the main other feature it provides is the ability to define symlinks, which is the main way you should customise your arch linux installation using this. Ie, if you install package_x that has a configuration file, you could define a symlink from the package_x config location to your main configuration folder.
+Alongside this, the other main feature is to allow you to create custom symlinks to help you manage your configuration. This is the main way config-king intends you customise your arch linux installation with. Ie, if you install package_x that has a configuration file, you could define a symlink from the package_x config location to your main configuration folder.
 
-Technical Limitations:
-- When using symlinks, the directories involved must not have any double quotation marks in them ("). (likely overcomeable in future, if someone desires this functionality).
+## Limitations
+- When using symlinks, the directories / paths involved must not have any double quotation marks in them ("). (likely overcomeable in future, if someone desires this functionality).
 - Unable to support package groups, each individual package needs to be explicitly installed (not sure if it is possible to overcome, as pacman does not keep logs of where a package was installed from, ie. if it was installed via a group, to my knowledge).
+- When specifying urls for custom git links, changing the url will not update that package, as the url is only used for the original clone. Simply remove the entry from the table, rebuild, and then put the new entry on the table
+- config-king is still in development and so breaking changes will be made where necessary, and will be reflected in an updated config.lua file demonstrating the new syntax, although it is fairly stable now. The top of main.rs has TODOs that are currently being worked upon.
 
-## Wiki
-To be written when the project has reached version 1 (i.e when it becomes stable). The example config file is pretty self explanatory however and short.
+## How to use
+See [config.lua](https://github.com/kingdomkind/config-king/blob/main/src/config.lua) for examples for how to use everything. There are comments explaining each section, although it's fairly self explanatory.
 
-## Building
-Simply clone the repo (git clone https://github.com/kingdomkind/config-king.git), then run "sudo cargo run" in the main project directory. You will need to have rust already installed since this is from source.
+## Arguments
+- directory=whatever/directory/you/want/config.lua -> changes the directory the config.lua file is sourced. If not specified, it will be assumed to be in the same directory as main.rs.
 
-# STILL IN DEVELOPMENT, NOT READY FOR ACTUAL USAGE - NOT ALL PLANNED FEATURES IMPLEMENTED
---> As of this commit, i will begin running this on my own system (eating my own "dogfood"), all commits beyond this point will henceforth be properly named and come with their respective changes. The previous commit history is erratic as i was testing on a virtual machine and had to push and pull from github to test anything. If anyone does want to use this, especially before the first release where I consider this to be reliable, please familiarise yourself with the codebase, it's quite short and i've left quite a few comments everywhere, it's important you know how it works so when it doesn't you can know what went wrong. Furthermore, to prevent any major damage, when the program tries to remove above 5 packages it asks for confirmation, and if it tries to remove a directory it lists the directory it wants to remove then asks for confirmation. Although this can be tedious, it's very needed to ensure things don't go boom (although i've never had an instance where i needed to decline it). 
+## Building / Installation
+Simply clone the repo (git clone https://github.com/kingdomkind/config-king.git), then run "cargo run" in the main project directory. You will need to have rust already installed since this is from source. For long term use, you can add something similar to the following in your bashrc or other shell language:
+
+```bash
+alias build-config='cargo run --manifest-path /home/user/path/to/cloned/config-king/Cargo.toml --directory=/home/user/your-config-repo/config.lua'
+```
