@@ -55,8 +55,8 @@ Symlinks = {
 	-- ["/etc/default/grub"] = "/home/user/myawesomeconfigfolder/grubconf"
 }
 
---> Change this to your username instead!
+--> Change this to your username instead! Must end in slash
 InstallLocations = {
-    ["Save"] = "/home/pika/.config-king/save.king",
+    ["Base"] = "/home/pika/.config-king/",
     ["Aur"] = "/home/pika/.config-king/aur/"
 } 

@@ -1,4 +1,4 @@
-use std::{collections::HashMap, io, path::Path, process::{exit, Command}};
+use std::{collections::HashMap, fs, io, path::Path, process::{exit, Command}};
 use super::globals::*;
 use colour::*;
 
@@ -74,6 +74,17 @@ pub fn send_output(mut output : Command) -> bool {
     let mut spawned = output.spawn().expect("Unable to output command");
     let wait = spawned.wait().expect("Failed to wait for output to end");
     return wait.success();
+}
+
+pub fn check_if_path_exists(path: String) -> bool {
+    return Path::new(&path).exists();
+}
+
+pub fn create_path(path: String) {
+    let should_do = get_confirmation();
+    if should_do {
+        let _ = fs::create_dir_all(path);
+    }
 }
 
 pub fn remove_path(path : String) {

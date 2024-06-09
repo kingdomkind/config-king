@@ -1,7 +1,8 @@
 use aur::{make_and_install_package, pull_package};
 use mlua::prelude::*;
 use save::overwrite_file;
-use std::{collections::HashMap, env, fs, path::Path, process::Command, time::Instant};
+use utilities::{check_if_path_exists, create_path};
+use std::{collections::HashMap, env, fs, path::{self, Path}, process::Command, time::Instant};
 use colour::*;
 
 mod globals;
@@ -20,8 +21,7 @@ BIG TODOS:
     dependency then someone could explicitly want to intsall it and it is still marked as a dep
     => Test if packages actually need to be set as a dep or not if removal fails
     => Check if install locations exist at the start of the script. If not, ask the user if they want them to be created
-    => Fix AUR installs, use AUR api to grab correct git clone repo. Need to check pkgname for official and AUR packages to see what they install. They will install all the pkgnames.
-    => Refactor code base into its own seperate sections
+    => If remove fails because it is a dep, mark as dep, but ask the user before doing so
 */
 
 /*
@@ -102,7 +102,14 @@ fn main() -> Result<(), mlua::Error> {
         match &value {
 
             mlua::Value::String(_string) => {
-                install_locations.insert(key.to_string().unwrap(), value.to_string().unwrap());
+                let path_location = value.to_string().unwrap();
+                install_locations.insert(key.to_string().unwrap(), path_location.clone());
+
+                if !check_if_path_exists(path_location.clone()) {
+                    yellow!("Warning: ");
+                    white_ln!("The directory {} does not exist. Would you like to create it? (entire path will be made) (y/n)", path_location.clone());
+                    create_path(path_location.clone());
+                }
             },
 
             _ => {
@@ -113,8 +120,9 @@ fn main() -> Result<(), mlua::Error> {
         }
     }
 
-    // FORMING PACKAGE VARIABLES
+    // CHECK INSTALL PATH EXSITS.
 
+    // FORMING PACKAGE VARIABLES
     // Gets tables from the lua script
     let packages_table: mlua::Table = globals.get("Packages")?;
     let official_table: mlua::Table = packages_table.get("Official")?;
@@ -338,13 +346,14 @@ fn main() -> Result<(), mlua::Error> {
     cyan!("Starting: ");
     white_ln!("Reading previous save file");
 
-    let save_exist = Path::new(&install_locations["Save"]).exists();
+    let save_file = install_locations["Base"].clone() + "save.king";
+    let save_exist = check_if_path_exists(save_file.clone());
 
     // Extracted Content
     let mut current_symlinks: Vec<String> = Vec::new();
 
     if save_exist {
-        let elements = save::read_file_elements(install_locations["Save"].clone());
+        let elements = save::read_file_elements(save_file.clone());
 
         for value in elements {
             let identifier_bound = value.find('=').unwrap();
@@ -368,7 +377,7 @@ fn main() -> Result<(), mlua::Error> {
         yellow!("Warning: ");
         white_ln!("No previous run save file detected, expected behaviour for first run, generating new file");
 
-        save::create_file_location(install_locations["Save"].clone());
+        save::create_file_location(save_file.clone());
     }
 
     magenta!("Finished: ");
@@ -395,7 +404,7 @@ fn main() -> Result<(), mlua::Error> {
     cyan!("Starting: ");
     white_ln!("Updating Save File");
 
-    overwrite_file(install_locations["Save"].clone(), symlink_msg);
+    overwrite_file(save_file.clone(), symlink_msg);
 
     magenta!("Finished: ");
     white_ln!("Updated Save File");
