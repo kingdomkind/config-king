@@ -22,5 +22,5 @@ See [config.lua](https://github.com/kingdomkind/config-king/blob/main/src/config
 Simply clone the repo (git clone https://github.com/kingdomkind/config-king.git), then run "cargo run" in the main project directory. You will need to have rust already installed since this is from source. For long term use, you can add something similar to the following in your bashrc or other shell language:
 
 ```bash
-alias build-config='cargo run --manifest-path /home/user/path/to/cloned/config-king/Cargo.toml --directory=/home/user/your-config-repo/config.lua'
+alias build-config='cargo run --manifest-path /home/user/path/to/cloned/config-king/Cargo.toml -- directory=/home/user/your-config-repo/config.lua'
 ```
