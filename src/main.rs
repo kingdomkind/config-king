@@ -2,7 +2,7 @@ use aur::{make_and_install_package, pull_package};
 use mlua::prelude::*;
 use save::overwrite_file;
 use utilities::{check_if_path_exists, create_path};
-use std::{collections::HashMap, env, fs, path::{self, Path}, process::Command, time::Instant};
+use std::{collections::HashMap, env, fs, process::Command, time::Instant};
 use colour::*;
 
 mod globals;
@@ -22,6 +22,7 @@ BIG TODOS:
     => Test if packages actually need to be set as a dep or not if removal fails
     => Check if install locations exist at the start of the script. If not, ask the user if they want them to be created
     => If remove fails because it is a dep, mark as dep, but ask the user before doing so
+    => Use pam client instead of sudo: https://docs.rs/pam-client/latest/pam_client/
 */
 
 /*
@@ -119,8 +120,6 @@ fn main() -> Result<(), mlua::Error> {
 
         }
     }
-
-    // CHECK INSTALL PATH EXSITS.
 
     // FORMING PACKAGE VARIABLES
     // Gets tables from the lua script
@@ -409,6 +408,17 @@ fn main() -> Result<(), mlua::Error> {
     magenta!("Finished: ");
     white_ln!("Updated Save File");
 
+    // Run post build hook function
+
+    cyan!("Starting: ");
+    white_ln!("Post Build Hook");
+
+    let post_build_hook: mlua::Function = globals.get("HookPost")?;
+    let result: Option<i32> = post_build_hook.call("").unwrap();
+
+    magenta!("Finished: ");
+    white_ln!("Post Save File");
+    
     // Everything done, we can exit
     let elapsed_time: f32 = (time.elapsed().as_millis() as f32) / 1000.0;
     magenta!("Finished: ");
