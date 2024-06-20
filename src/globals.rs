@@ -7,11 +7,14 @@ use once_cell::sync::Lazy;
 pub static DIRECTORY: Lazy<Mutex<String>> = Lazy::new(|| {
     let ret = match_arguments("DIRECTORY".to_string());
     if ret == "" { 
-        let default_dir = fs::read_to_string(env::current_dir()
+        let file = fs::read_to_string(env::current_dir()
         .expect("Unable to get current directory").to_str()
         .expect("Unable to convert current directory to str").to_string() + "/config.lua").unwrap();
-        return Mutex::new(default_dir);
-    } else { return Mutex::new(ret); };
+        return Mutex::new(file);
+    } else { 
+        let file = fs::read_to_string(ret).unwrap();
+        return Mutex::new(file);
+    };
 });
 
 pub static PACKAGE_REMOVE_WARN_LIMIT: Lazy<Mutex<u32>> = Lazy::new(|| {
