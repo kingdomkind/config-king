@@ -2,6 +2,8 @@ use std::process::Command;
 
 use colour::*;
 
+use crate::unstatic;
+
 use super::globals::*;
 use super::utilities;
 
@@ -9,7 +11,7 @@ pub fn remove_packages(package_names: Vec<String>) {
     if package_names.len() > 0 {
         let mut output = Command::new("flatpak");
         output.arg("uninstall");
-        if ASSUME_YES { output.arg("--assumeyes"); }
+        if unstatic!(ASSUME_YES) { output.arg("--assumeyes"); }
 
         for package in &package_names {
             output.arg(package);
@@ -24,7 +26,7 @@ pub fn remove_packages(package_names: Vec<String>) {
         let mut output = Command::new("flatpak");
         output.arg("uninstall");
         output.arg("--unused");
-        if ASSUME_YES { output.arg("--assumeyes"); }
+        if unstatic!(ASSUME_YES) { output.arg("--assumeyes"); }
 
         let _success = utilities::send_output(output);
     }
@@ -43,7 +45,7 @@ pub fn install_packages(package_names: Vec<String>) {
         output.arg(package);
     }
 
-    if ASSUME_YES { output.arg("--assumeyes"); }
+    if unstatic!(ASSUME_YES) { output.arg("--assumeyes"); }
 
     let success = utilities::send_output(output);
     if success {
@@ -57,7 +59,7 @@ pub fn install_packages(package_names: Vec<String>) {
 pub fn upgrade_all_packages() {
     let mut output = Command::new("flatpak");
     output.arg("update");
-    if ASSUME_YES { output.arg("--assumeyes"); }
+    if unstatic!(ASSUME_YES) { output.arg("--assumeyes"); }
     utilities::send_output(output);
 }
 

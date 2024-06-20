@@ -4,13 +4,35 @@ use colour::*;
 use once_cell::sync::Lazy;
 
 // Config Variables
-pub const SEE_STDOUT : bool = true;
-pub const SEE_STDERR : bool = true;
-pub const ASSUME_YES : bool = true;
-pub const PACKAGE_REMOVE_WARN_LIMIT : u32 = 5;
-//pub const DEFAULT_YES : bool = true;
+pub static DIRECTORY: Lazy<Mutex<String>> = Lazy::new(|| {
+    let ret = match_arguments("DIRECTORY".to_string());
+    if ret == "" { 
+        let default_dir = fs::read_to_string(env::current_dir()
+        .expect("Unable to get current directory").to_str()
+        .expect("Unable to convert current directory to str").to_string() + "/config.lua").unwrap();
+        return Mutex::new(default_dir);
+    } else { return Mutex::new(ret); };
+});
 
+pub static PACKAGE_REMOVE_WARN_LIMIT: Lazy<Mutex<u32>> = Lazy::new(|| {
+    let ret = match_arguments("PACKAGE_REMOVE_WARN_LIMIT".to_string());
+    if ret == "" { return Mutex::new(5); } else  { return Mutex::new(ret.parse().unwrap()); };
+});
 
+pub static SEE_STDERR: Lazy<Mutex<bool>> = Lazy::new(|| {
+    let ret = match_arguments("SEE_STDERR".to_string());
+    if ret == "false" { return Mutex::new(false); } else  { return Mutex::new(true); };
+});
+
+pub static SEE_STDOUT: Lazy<Mutex<bool>> = Lazy::new(|| {
+    let ret = match_arguments("SEE_STDOUT".to_string());
+    if ret == "false" { return Mutex::new(false); } else  { return Mutex::new(true); };
+});
+
+pub static ASSUME_YES: Lazy<Mutex<bool>> = Lazy::new(|| {
+    let ret = match_arguments("ASSUME_YES".to_string());
+    if ret == "false" { return Mutex::new(false); } else  { return Mutex::new(true); };
+});
 
 pub static DEFAULT_YES: Lazy<Mutex<bool>> = Lazy::new(|| {
     let ret = match_arguments("DEFAULT_YES".to_string());

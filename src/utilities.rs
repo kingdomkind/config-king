@@ -2,11 +2,12 @@ use std::{collections::HashMap, fs, io, path::Path, process::{exit, Command}};
 use super::globals::*;
 use colour::*;
 
+#[macro_export]
 macro_rules! unstatic {
     ($mutex:expr) => {{
         // Acquire the lock and unwrap the result
         let lock = $mutex.lock().unwrap();
-        *lock // Return the locked value
+        lock.clone() // Return the locked value
     }};
 }
 
@@ -77,8 +78,8 @@ pub fn get_current_directory() -> String {
 // Runs Commands, and displays the output and returns if successful
 pub fn send_output(mut output : Command) -> bool {
 
-    if !SEE_STDOUT { output.stdout(std::process::Stdio::null()); }
-    if !SEE_STDERR { output.stderr(std::process::Stdio::null()); }
+    if !unstatic!(SEE_STDOUT) { output.stdout(std::process::Stdio::null()); }
+    if !unstatic!(SEE_STDERR) { output.stderr(std::process::Stdio::null()); }
 
     let mut spawned = output.spawn().expect("Unable to output command");
     let wait = spawned.wait().expect("Failed to wait for output to end");

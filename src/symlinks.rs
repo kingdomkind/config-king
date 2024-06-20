@@ -25,7 +25,7 @@ pub fn generate_symlinks(symlinks_table : mlua::Table) -> String {
                 let symlink_dir = link_dir.clone() + "=" + &original_dir;
                 let mut already_exist = false;
 
-                println!("Debugging: {} {}", link_dir, original_dir);
+                //println!("Debugging: {} {}", link_dir, original_dir);
 
                 // IF STATEMENT CAUSES ISSUE - PATHS WITH HIGHER ACCESS LEVEL (IE. ROOT) CANNOT BE ACCESSED
                 if Path::new(&link_dir).exists() {

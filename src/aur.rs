@@ -1,6 +1,9 @@
 use std::env;
 use std::fs;
 use std::process::Command;
+
+use crate::unstatic;
+
 use super::utilities;
 use super::globals::*;
 use colour::*;
@@ -106,7 +109,7 @@ pub fn make_and_install_package(aur_location: String, base_package: String, sub_
 
     let mut output = Command::new("makepkg");
     output.arg("-s");
-    if ASSUME_YES { output.arg("--noconfirm"); }
+    if unstatic!(ASSUME_YES) { output.arg("--noconfirm"); }
 
     let success = utilities::send_output(output);
     if success {
@@ -143,7 +146,7 @@ pub fn make_and_install_package(aur_location: String, base_package: String, sub_
         output.arg(best_package);
     }
 
-    if ASSUME_YES { output.arg("--noconfirm"); }
+    if unstatic!(ASSUME_YES) { output.arg("--noconfirm"); }
 
     let success = utilities::send_output(output);
     if success {

@@ -2,7 +2,7 @@ use aur::{make_and_install_package, pull_package};
 use mlua::prelude::*;
 use save::overwrite_file;
 use utilities::{check_if_path_exists, create_path};
-use std::{collections::HashMap, env, fs, process::Command, time::Instant};
+use std::{collections::HashMap, process::Command, time::Instant};
 use colour::*;
 
 mod globals;
@@ -45,38 +45,6 @@ fn main() -> Result<(), mlua::Error> {
     // Begin time tracking
     let time = Instant::now();
 
-
-    let mut arguments: Vec<String> = env::args().collect();
-    arguments.remove(0);
-
-    // Read the Lua file, cargo run should be run from the directory of the config file if no directory is specified
-    let mut lua_script: String = String::new();
-
-    for arg in arguments {
-        let pos = arg.find('=');
-
-        if !pos.is_none() {
-            let key = &arg[..pos.unwrap()];
-            let value = &arg[pos.unwrap() + 1..];
-
-            match key {
-                "directory" => {
-                    lua_script = fs::read_to_string(value.to_string())?;
-                },
-                _ => { yellow!("Warning: "); white_ln!("{} is not a recognised key", key); }
-            }
-        } else {
-            yellow!("Warning: ");
-            white_ln!("No '=' found in the argument {}", arg)
-        }
-    }
-
-    if lua_script.is_empty() {
-        lua_script = fs::read_to_string(env::current_dir()
-        .expect("Unable to get current directory").to_str()
-        .expect("Unable to convert current directory to str").to_string() + "/config.lua")?;
-    }
-
     // Ensure dependencies are installed!
     if !utilities::is_system_package_installed("flatpak") {
         yellow!("Warning: ");
@@ -94,7 +62,7 @@ fn main() -> Result<(), mlua::Error> {
 
     // Load the Lua script
     let globals = lua.globals();
-    lua.load(&lua_script).exec()?;
+    lua.load(&unstatic!(DIRECTORY)).exec()?;
 
     // READING INSTALL LOCATIONS
     let mut install_locations : HashMap<String, String> = HashMap::new();
@@ -158,8 +126,8 @@ fn main() -> Result<(), mlua::Error> {
 
     // Checking if we should actually remove the packages, if above the regular warn limit
     let mut should_remove_package : bool = true;
-    if (packages_to_remove.len() + flatpak_packages_to_remove.len()) > PACKAGE_REMOVE_WARN_LIMIT.try_into().unwrap() {
-        yellow_ln!("Packages to remove is above the warning limit of {} and are:", PACKAGE_REMOVE_WARN_LIMIT);
+    if (packages_to_remove.len() + flatpak_packages_to_remove.len()) > unstatic!(PACKAGE_REMOVE_WARN_LIMIT).try_into().unwrap() {
+        yellow_ln!("Packages to remove is above the warning limit of {} and are:", unstatic!(PACKAGE_REMOVE_WARN_LIMIT));
 
         for value in &packages_to_remove {
             yellow_ln!("{}", value);
@@ -416,7 +384,7 @@ fn main() -> Result<(), mlua::Error> {
     white_ln!("Post Build Hook");
 
     let post_build_hook: mlua::Function = globals.get("HookPost")?;
-    let result: Option<i32> = post_build_hook.call("").unwrap();
+    let _result: Option<i32> = post_build_hook.call("").unwrap();
 
     magenta!("Finished: ");
     white_ln!("Post Save File");

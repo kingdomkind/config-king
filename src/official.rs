@@ -1,6 +1,8 @@
 use std::process::Command;
 use colour::*;
 
+use crate::unstatic;
+
 use super::globals::*;
 use super::utilities;
 
@@ -13,7 +15,7 @@ pub fn install_packages(package_names: Vec<String>) {
         output.arg(package);
     }
 
-    if ASSUME_YES { output.arg("--noconfirm"); }
+    if unstatic!(ASSUME_YES) { output.arg("--noconfirm"); }
 
     let success = utilities::send_output(output);
     if success {
@@ -29,7 +31,7 @@ pub fn remove_system_packages(package_names: Vec<String>) {
         let mut output = Command::new("sudo");
         output.arg("pacman");
         output.arg("-Rns");
-        if ASSUME_YES { output.arg("--noconfirm"); }
+        if unstatic!(ASSUME_YES) { output.arg("--noconfirm"); }
 
         for value in &package_names {
             output.arg(value);
@@ -50,7 +52,7 @@ pub fn upgrade_all_packages() {
     let mut output = Command::new("sudo");
     output.arg("pacman");
     output.arg("-Syu");
-    if ASSUME_YES { output.arg("--noconfirm"); }
+    if unstatic!(ASSUME_YES) { output.arg("--noconfirm"); }
     utilities::send_output(output);
 }
 
