@@ -2,6 +2,15 @@ use std::{collections::HashMap, fs, io, path::Path, process::{exit, Command}};
 use super::globals::*;
 use colour::*;
 
+macro_rules! unstatic {
+    ($mutex:expr) => {{
+        // Acquire the lock and unwrap the result
+        let lock = $mutex.lock().unwrap();
+        *lock // Return the locked value
+    }};
+}
+
+
 pub fn is_system_package_installed(package_name: &str) -> bool {
     let output = Command::new("which")
     .arg(package_name)
@@ -49,7 +58,7 @@ pub fn get_confirmation() -> bool {
         match response.trim().to_lowercase().as_str() {
             "yes" | "y" | "ye" => choice = true,
             "no" | "n" | "nah" => choice = false,
-            "" => { if DEFAULT_YES { choice = true; } else { choice = false; } },
+            "" => { if unstatic!(DEFAULT_YES) { choice = true; } else { choice = false; } },
             _ => accepted_response = false,
         }
     }

@@ -1,21 +1,26 @@
-use std::{env, fs};
+use std::{collections::HashMap, env, fs, sync::Mutex};
 
 use colour::*;
+use once_cell::sync::Lazy;
 
 // Config Variables
 pub const SEE_STDOUT : bool = true;
 pub const SEE_STDERR : bool = true;
 pub const ASSUME_YES : bool = true;
 pub const PACKAGE_REMOVE_WARN_LIMIT : u32 = 5;
-pub const DEFAULT_YES : bool = true;
+//pub const DEFAULT_YES : bool = true;
 
-/*
-fn match_arguments(target: String) {
+
+
+pub static DEFAULT_YES: Lazy<Mutex<bool>> = Lazy::new(|| {
+    let ret = match_arguments("DEFAULT_YES".to_string());
+    if ret == "false" { return Mutex::new(false); } else  { return Mutex::new(true); };
+});
+
+fn match_arguments(target: String) -> String {
+    let mut configured_arguments: HashMap<String, String> = HashMap::new();
     let mut arguments: Vec<String> = env::args().collect();
     arguments.remove(0);
-
-    // Read the Lua file, cargo run should be run from the directory of the config file if no directory is specified
-    let mut lua_script: String = String::new();
 
     for arg in arguments {
         let pos = arg.find('=');
@@ -23,16 +28,16 @@ fn match_arguments(target: String) {
         if !pos.is_none() {
             let key = &arg[..pos.unwrap()];
             let value = &arg[pos.unwrap() + 1..];
-
-            match key {
-                "directory" => {
-                    lua_script = fs::read_to_string(value.to_string())?;
-                },
-                _ => { yellow!("Warning: "); white_ln!("{} is not a recognised key", key); }
-            }
+            configured_arguments.insert(key.to_string(), value.to_string());
         } else {
             yellow!("Warning: ");
             white_ln!("No '=' found in the argument {}", arg)
         }
     }
-} */
+
+    if configured_arguments.contains_key(&target) {
+        return configured_arguments[&target].clone();
+    } else {
+        return String::new();
+    }
+} 
