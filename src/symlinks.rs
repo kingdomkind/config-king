@@ -1,5 +1,7 @@
 use std::{collections::HashMap, fs, path::Path, process::Command};
 use colour::*;
+use crate::{unstatic, AUTH_AGENT};
+
 use super::utilities;
 
 pub fn generate_symlinks(symlinks_table : mlua::Table) -> String {
@@ -28,17 +30,28 @@ pub fn generate_symlinks(symlinks_table : mlua::Table) -> String {
                 //println!("Debugging: {} {}", link_dir, original_dir);
 
                 // Be aware this needs root permissions to check certain file systems
+                /*
                 if Path::new(&link_dir).exists() {
                     let metadata = fs::symlink_metadata(&link_dir).unwrap();
                     already_exist = metadata.file_type().is_symlink();
-                    //println!("Link dir exists, is it a symlink? {}", already_exist);
+                } */
+                let output = Command::new(unstatic!(AUTH_AGENT))
+                .arg("test")
+                .arg("-L")
+                .arg(&link_dir)
+                .output()
+                .expect("Failed to execute command");
+
+                if output.status.success() {
+                    already_exist = true
                 }
 
                 //println!("After link dir check {}", already_exist);
 
                 if !already_exist { // Only create the symlink if there's not already one there, we confirmed it was valid in the removal process
 
-                    let mut output = Command::new("ln");
+                    let mut output = Command::new(unstatic!(AUTH_AGENT));
+                    output.arg("ln");
                     output.arg("-s");
                     output.arg(&original_dir);
                     output.arg(&link_dir);

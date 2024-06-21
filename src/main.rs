@@ -2,7 +2,7 @@ use aur::{make_and_install_package, pull_package};
 use mlua::prelude::*;
 use save::overwrite_file;
 use utilities::{check_if_path_exists, create_path};
-use std::{collections::HashMap, process::{self, Command}, time::Instant};
+use std::{collections::HashMap, process::{self, Command}, time::Instant, vec};
 use colour::*;
 
 mod globals;
@@ -38,10 +38,10 @@ Magenta - Finished section
 
 // Main Function
 fn main() -> Result<(), mlua::Error> {
-    // Check that we are running as root
-    if unsafe { libc::geteuid() != 0 } && unstatic!(ROOT_CHECK) {
-        red_ln!("ERROR: Program must be ran as root! (If the relevant commands are authenticated another way, and you wish to
-             bypass the root check, add the argument ROOT_CHECK=false ");
+
+    // Check that we are NOT running as root
+    if unsafe { !(libc::geteuid() != 0) } && unstatic!(ROOT_CHECK) {
+        red_ln!("ERROR: Program must not ran as root! If you wish to bypass the root check, add the argument ROOT_CHECK=false");
         process::exit(1);
     }
 
@@ -272,6 +272,7 @@ fn main() -> Result<(), mlua::Error> {
                 std::fs::create_dir(&directory)?;
             } else {
                 install_required = false;
+
                 let needs_update = pull_package(install_locations["Aur"].clone(), base_package.clone());
                 if needs_update { make_and_install_package(install_locations["Aur"].clone(), base_package.clone(), sub_packages.clone()) }
             }

@@ -7,7 +7,8 @@ use super::globals::*;
 use super::utilities;
 
 pub fn install_packages(package_names: Vec<String>) {
-    let mut output = Command::new("pacman");
+    let mut output = Command::new(unstatic!(AUTH_AGENT));
+    output.arg("pacman");
     output.arg("-S");
 
     for package in &package_names {
@@ -27,7 +28,8 @@ pub fn install_packages(package_names: Vec<String>) {
 
 pub fn remove_system_packages(package_names: Vec<String>) {
     if package_names.len() > 0 {
-        let mut output = Command::new("pacman");
+        let mut output = Command::new(unstatic!(AUTH_AGENT));
+        output.arg("pacman");
         output.arg("-Rns");
         if unstatic!(ASSUME_YES) { output.arg("--noconfirm"); }
 
@@ -47,7 +49,8 @@ pub fn remove_system_packages(package_names: Vec<String>) {
 }
 
 pub fn upgrade_all_packages() {
-    let mut output = Command::new("pacman");
+    let mut output = Command::new(unstatic!(AUTH_AGENT));
+    output.arg("pacman");
     output.arg("-Syu");
     if unstatic!(ASSUME_YES) { output.arg("--noconfirm"); }
     utilities::send_output(output);

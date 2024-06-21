@@ -105,7 +105,8 @@ pub fn remove_path(path : String) {
             white_ln!("Are you sure you would like to remove the directory at {} [y/n]", path);
             let confirm = get_confirmation();
             if confirm {
-                let mut output = Command::new("rm");
+                let mut output = Command::new(unstatic!(AUTH_AGENT));
+                output.arg("rm");
                 output.arg("-r");
                 output.arg(&path);
                 ret = Some(send_output(output));
@@ -116,7 +117,8 @@ pub fn remove_path(path : String) {
             white_ln!("Are you sure you would like to remove the file at {} [y/n]", path);
             let confirm = get_confirmation();
             if confirm {
-                let mut output = Command::new("rm");
+                let mut output = Command::new(unstatic!(AUTH_AGENT));
+                output.arg("rm");
                 output.arg(&path);
                 ret = Some(send_output(output));
             }

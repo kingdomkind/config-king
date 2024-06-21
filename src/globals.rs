@@ -27,6 +27,11 @@ pub static ROOT_CHECK: Lazy<Mutex<bool>> = Lazy::new(|| {
     if ret == "false" { return Mutex::new(false); } else  { return Mutex::new(true); };
 });
 
+pub static AUTH_AGENT: Lazy<Mutex<String>> = Lazy::new(|| {
+    let ret = match_arguments("AUTH_AGENT".to_string());
+    if ret == "" { return Mutex::new("sudo".to_string()); } else  { return Mutex::new(ret.to_string()); };
+});
+
 pub static SEE_STDERR: Lazy<Mutex<bool>> = Lazy::new(|| {
     let ret = match_arguments("SEE_STDERR".to_string());
     if ret == "false" { return Mutex::new(false); } else  { return Mutex::new(true); };

@@ -21,7 +21,7 @@
     - Default: true
     - Options: true, false
     - Example: ROOT_CHECK=false
-    - Description: Checks the program is running as root, so it can execute the necessary commands. Set to false if you have another method of ensuring it can run the necessary commands.
+    - Description: Checks the program is running as root, which is prohibited. Set to false if you can somehow mitigate the issues that arise from this and want this functionality.
 
 - SEE_STDERR
     - Type: Bool
@@ -50,6 +50,13 @@
     - Options: true, false
     - Example: DEFAULT_YES=true
     - Description: Changes the default behaviour of y/n questions config-king asks you (eg. removing a directory). Setting to true means that pressing enter assumes you pressed y, and setting false assumes that pressing enter means n.
+
+- AUTH_AGENT
+    - Type: String
+    - Default: sudo
+    - Options: Any authentication manager that supports being pre-pended to the command (eg. doas or sudo)
+    - Example: AUTH_AGENT=sudo
+    - Description: Changes the pre-pended command that bash commands are run with to gain root access.
 
 *Please note that unrecognised arguments are simply skipped, and are not announced to the user.* 
 
