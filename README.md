@@ -7,7 +7,7 @@ config-king is a script which allows you to manage your arch (or arch based) sys
 Alongside this, the other main feature is to allow you to create custom symlinks to help you manage your configuration. This is the main way config-king intends you customise your arch linux installation with. Ie, if you install package_x that has a configuration file, you could define a symlink from the package_x config location to your main configuration folder.
 
 ## Things you should know
-- We are to support package groups, each individual package needs to be explicitly installed (not sure if it is possible to overcome, as pacman does not keep logs of where a package was installed from, ie. if it was installed via a group, to my knowledge).
+- We are unable to support package groups, each individual package needs to be explicitly installed (not sure if it is possible to overcome, as pacman does not keep logs of where a package was installed from, ie. if it was installed via a group, to my knowledge).
 - config-king is still in development and so breaking changes will be made where necessary, and will be reflected in an updated config.lua file demonstrating the new syntax, although it is fairly stable now. The top of main.rs has TODOs that are currently being worked upon.
 
 ## How to use / configure
