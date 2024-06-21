@@ -1,5 +1,6 @@
 use aur::{make_and_install_package, pull_package};
 use mlua::prelude::*;
+use pam_client::{conv_cli::Conversation, Context, Flag};
 use save::overwrite_file;
 use utilities::{check_if_path_exists, create_path};
 use std::{collections::HashMap, process::Command, time::Instant};
