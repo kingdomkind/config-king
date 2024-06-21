@@ -1,9 +1,8 @@
 use aur::{make_and_install_package, pull_package};
 use mlua::prelude::*;
-use pam_client::{conv_cli::Conversation, Context, Flag};
 use save::overwrite_file;
 use utilities::{check_if_path_exists, create_path};
-use std::{collections::HashMap, process::Command, time::Instant};
+use std::{collections::HashMap, process::{self, Command}, time::Instant};
 use colour::*;
 
 mod globals;
@@ -20,10 +19,7 @@ use globals::*;
 BIG TODOS:
     => Before trying to install a package, check if it is already installed in the system, not just through explicitly installed means. It could be dragged in as a
     dependency then someone could explicitly want to intsall it and it is still marked as a dep. Mark as explicitly installed after
-    => Check if install locations exist at the start of the script. If not, ask the user if they want them to be created
     => If remove fails because it is a dep, mark as dep, but ask the user before doing so
-    => Use pam client instead of sudo: https://docs.rs/pam-client/latest/pam_client/
-    => Fix issue in symlinks.rs, code comment there explains further
     => Pull aur repos in parallel, then re-sync to build in order (eg. by assigning each a value determining order, then checking what the current value is on)
 */
 
@@ -42,6 +38,12 @@ Magenta - Finished section
 
 // Main Function
 fn main() -> Result<(), mlua::Error> {
+    // Check that we are running as root
+    if unsafe { libc::geteuid() != 0 } && unstatic!(ROOT_CHECK) {
+        red_ln!("ERROR: Program must be ran as root! (If the relevant commands are authenticated another way, and you wish to
+             bypass the root check, add the argument ROOT_CHECK=false ");
+        process::exit(1);
+    }
 
     // Begin time tracking
     let time = Instant::now();

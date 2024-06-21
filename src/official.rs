@@ -7,8 +7,7 @@ use super::globals::*;
 use super::utilities;
 
 pub fn install_packages(package_names: Vec<String>) {
-    let mut output = Command::new("sudo");
-    output.arg("pacman");
+    let mut output = Command::new("pacman");
     output.arg("-S");
 
     for package in &package_names {
@@ -28,8 +27,7 @@ pub fn install_packages(package_names: Vec<String>) {
 
 pub fn remove_system_packages(package_names: Vec<String>) {
     if package_names.len() > 0 {
-        let mut output = Command::new("sudo");
-        output.arg("pacman");
+        let mut output = Command::new("pacman");
         output.arg("-Rns");
         if unstatic!(ASSUME_YES) { output.arg("--noconfirm"); }
 
@@ -49,8 +47,7 @@ pub fn remove_system_packages(package_names: Vec<String>) {
 }
 
 pub fn upgrade_all_packages() {
-    let mut output = Command::new("sudo");
-    output.arg("pacman");
+    let mut output = Command::new("pacman");
     output.arg("-Syu");
     if unstatic!(ASSUME_YES) { output.arg("--noconfirm"); }
     utilities::send_output(output);
@@ -122,8 +119,6 @@ pub fn subtract_vec(rust_table : Vec<String>, lua_table : mlua::Table) -> Vec<St
             if rust_table.contains(&package) {
                 let index = rust_table.iter().position(|r| *r == package);
                 rust_table.remove(index.unwrap());
-            } else {
-                println!("Didnt contian {}", package);
             }
         }
     };

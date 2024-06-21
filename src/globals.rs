@@ -22,6 +22,11 @@ pub static PACKAGE_REMOVE_WARN_LIMIT: Lazy<Mutex<u32>> = Lazy::new(|| {
     if ret == "" { return Mutex::new(5); } else  { return Mutex::new(ret.parse().unwrap()); };
 });
 
+pub static ROOT_CHECK: Lazy<Mutex<bool>> = Lazy::new(|| {
+    let ret = match_arguments("ROOT_CHECK".to_string());
+    if ret == "false" { return Mutex::new(false); } else  { return Mutex::new(true); };
+});
+
 pub static SEE_STDERR: Lazy<Mutex<bool>> = Lazy::new(|| {
     let ret = match_arguments("SEE_STDERR".to_string());
     if ret == "false" { return Mutex::new(false); } else  { return Mutex::new(true); };

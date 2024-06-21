@@ -124,8 +124,7 @@ pub fn make_and_install_package(aur_location: String, base_package: String, sub_
     let possible_pkgs = String::from_utf8(output.stdout).unwrap();
     let possible_pkgs: Vec<&str> = possible_pkgs.split("\n").filter(|x| x.contains(".pkg.tar.zst")).collect();
 
-    let mut output = Command::new("sudo"); // Issue - base package may NOT be the one you want to install, string pattern matching of .contains isn't good enough
-    output.arg("pacman");
+    let mut output = Command::new("pacman"); // Issue - base package may NOT be the one you want to install, string pattern matching of .contains isn't good enough
     output.arg("-U");
 
     for package in &sub_packages {

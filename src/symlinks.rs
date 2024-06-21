@@ -27,7 +27,7 @@ pub fn generate_symlinks(symlinks_table : mlua::Table) -> String {
 
                 //println!("Debugging: {} {}", link_dir, original_dir);
 
-                // IF STATEMENT CAUSES ISSUE - PATHS WITH HIGHER ACCESS LEVEL (IE. ROOT) CANNOT BE ACCESSED
+                // Be aware this needs root permissions to check certain file systems
                 if Path::new(&link_dir).exists() {
                     let metadata = fs::symlink_metadata(&link_dir).unwrap();
                     already_exist = metadata.file_type().is_symlink();
@@ -38,8 +38,7 @@ pub fn generate_symlinks(symlinks_table : mlua::Table) -> String {
 
                 if !already_exist { // Only create the symlink if there's not already one there, we confirmed it was valid in the removal process
 
-                    let mut output = Command::new("sudo");
-                    output.arg("ln");
+                    let mut output = Command::new("ln");
                     output.arg("-s");
                     output.arg(&original_dir);
                     output.arg(&link_dir);
