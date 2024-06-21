@@ -26,3 +26,5 @@ Packages = {
 "package-name-here",
 ```
 Simply put the package name, and it will install the package from official arch repos.
+
+[Back to Index](https://github.com/kingdomkind/config-king/blob/main/docs/index.md)

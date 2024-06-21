@@ -25,3 +25,5 @@ Packages = {
 "Application-ID-name-here",
 ```
 Simply put the application ID (the last part of an url on flathub).
+
+[Back to Index](https://github.com/kingdomkind/config-king/blob/main/docs/index.md)

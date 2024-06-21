@@ -73,4 +73,5 @@ The ["url"] key is an optional key that allows you to download PKGBUILDs and the
 
 *Please note that changing the url of an AUR package that is already cloned will not do anything - the url is only used the orginal git clone. If you want to change the url only, then comment out the relevant code, run config-king, then uncomment the code and run it again*
 
+[Back to Index](https://github.com/kingdomkind/config-king/blob/main/docs/index.md)
 
