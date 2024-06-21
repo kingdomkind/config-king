@@ -60,3 +60,8 @@ InstallLocations = {
     ["Base"] = "/home/pika/.config-king/",
     ["Aur"] = "/home/pika/.config-king/aur/"
 } 
+
+--> Ran when build script finishes
+function HookPost()
+    print("Beep, build script finished!")
+end
