@@ -47,13 +47,53 @@ pub fn remove_system_packages(package_names: Vec<String>) {
             output.arg(value);
         }
     
-        let success : bool = utilities::send_output(output);
-        if success {
+        let success = output.output().unwrap();
+
+        if success.status.success() {
             green!("Removed: ");
             white_ln!("{:?}", package_names);
         } else {
-            yellow!("Warning: ");
-            white_ln!("Failed to remove {:?}", package_names);
+            // We need to check if it is a dependency of another package
+            let mut packages_to_dep: Vec<String> = Vec::new();
+            let mut package_names = package_names.clone();
+
+            for package in &package_names {
+                println!("{}", package);
+            }
+
+            for line in String::from_utf8(success.stdout).unwrap().split('\n') {
+                if line.contains("breaks dependency") {
+                    let words: Vec<&str> = line.split(' ').collect();
+                    let target = words[2].to_string();
+                    let index_option = package_names.iter().position(|x| *x == target);
+                    // It can appear multiple times, and we can only remove it once
+                    match index_option {
+                        Some(_) => {
+                            packages_to_dep.push(target.clone());
+                            package_names.remove(index_option.unwrap());
+                        },
+                        None => (),
+                    }
+                }
+            }
+
+            for package in &packages_to_dep {
+                let mut dep = Command::new(unstatic!(AUTH_AGENT));
+                dep.arg("pacman");
+                dep.arg("--asdep");
+                dep.arg("-D");
+                dep.arg(package);
+                let _success = utilities::send_output(dep);
+            }
+
+            // Isn't a dependency, throw error
+            if packages_to_dep.len() == 0 {
+                yellow!("Warning: ");
+                white_ln!("Failed to remove {:?}", package_names);
+            } else {
+                // Is a dependency, try again without that package (that package is now marked as dep)
+                remove_system_packages(package_names);
+            }
         }
     }
 }

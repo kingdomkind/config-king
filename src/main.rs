@@ -17,10 +17,9 @@ use globals::*;
 
 /*
 BIG TODOS:
-    => Before trying to install a package, check if it is already installed in the system, not just through explicitly installed means. It could be dragged in as a
-    dependency then someone could explicitly want to intsall it and it is still marked as a dep. Mark as explicitly installed after
     => If remove fails because it is a dep, mark as dep, but ask the user before doing so
     => Pull aur repos in parallel, then re-sync to build in order (eg. by assigning each a value determining order, then checking what the current value is on)
+    => Allow some tables / functions to not be defined (without causing errors)
 */
 
 /*
