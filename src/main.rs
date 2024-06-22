@@ -117,7 +117,8 @@ fn main() -> Result<(), mlua::Error> {
     }
 
     // REMOVING PACKAGES //
-    let mut system_packages: Vec<String> = utilities::get_installed_system_packages();
+    let mut system_packages: Vec<String> = utilities::get_installed_system_packages("-Qeq".to_string());
+    let system_packages_with_non_explicit: Vec<String> = utilities::get_installed_system_packages("-Qq".to_string());
 
     cyan!("Starting: ");
     white_ln!("Removing packages");
@@ -178,6 +179,9 @@ fn main() -> Result<(), mlua::Error> {
                 if system_packages.contains(&string_str.to_string()) {
                     let index = system_packages.iter().position(|r| r == string_str);
                     system_packages.remove(index.unwrap());
+                // Dealing with packages that are not expliciity installed, yet declared
+                } else if system_packages_with_non_explicit.contains(&string_str.to_string()) {
+                    official::mark_package_as_explicit(string_str.to_string());
                 } else {
                     white_ln!("Attempting to install {}", string_str);
 

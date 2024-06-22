@@ -25,10 +25,10 @@ pub fn vec_str_to_string(vector : Vec<&str>) -> Vec<String> {
     return vector.into_iter().map(|x| x.to_string()).collect();
 }
 
-pub fn get_installed_system_packages() -> Vec<String> {
+pub fn get_installed_system_packages(modifier: String) -> Vec<String> {
     // Get currently installed packages -- this one needs to use .output to get the stdout.
     let output = Command::new("pacman")
-    .arg("-Qeq")
+    .arg(modifier)
     .output()
     .expect("Failed to execute command");
 
@@ -44,7 +44,6 @@ pub fn get_installed_system_packages() -> Vec<String> {
     // Convert elements to string
     return vec_str_to_string(packages)
 }
-
 
 pub fn get_confirmation() -> bool {
     let mut accepted_response = false;

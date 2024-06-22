@@ -6,6 +6,16 @@ use crate::unstatic;
 use super::globals::*;
 use super::utilities;
 
+pub fn mark_package_as_explicit(package: String) {
+    let mut output = Command::new(unstatic!(AUTH_AGENT));
+    output.arg("pacman");
+    output.arg("-D");
+    output.arg("--asexplicit");
+    output.arg(&package);
+
+    let _success = utilities::send_output(output);
+}
+
 pub fn install_packages(package_names: Vec<String>) {
     let mut output = Command::new(unstatic!(AUTH_AGENT));
     output.arg("pacman");
