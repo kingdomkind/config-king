@@ -1,6 +1,6 @@
-use std::{collections::HashMap, fs, path::{self, Path}, process::Command};
+use std::{collections::HashMap, fs, path::Path, process::Command};
 use colour::*;
-use crate::{unstatic, AUTH_AGENT};
+use crate::{unstatic, utilities::{check_if_path_exists, remove_path}, AUTH_AGENT};
 
 use super::utilities;
 
@@ -45,8 +45,12 @@ pub fn generate_symlinks(symlinks_table : mlua::Table) -> String {
 
                 if !already_exist { // Only create the symlink if there's not already one there, we confirmed it was valid in the removal process
 
-                    let path_to_ensure_made = Path::new(&link_dir).parent().unwrap();
+                    // Check that there's no random file there already
+                    if check_if_path_exists(link_dir.clone()) {
+                        remove_path(link_dir.clone());
+                    }                    
 
+                    let path_to_ensure_made = Path::new(&link_dir).parent().unwrap();
                     let output = Command::new(unstatic!(AUTH_AGENT))
                     .arg("test")
                     .arg("-d")

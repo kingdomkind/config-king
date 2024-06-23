@@ -85,6 +85,7 @@ pub fn send_output(mut output : Command) -> bool {
     return wait.success();
 }
 
+// This function is fallible to sudo issues
 pub fn check_if_path_exists(path: String) -> bool {
     return Path::new(&path).exists();
 }
@@ -96,6 +97,7 @@ pub fn create_path(path: String) {
     }
 }
 
+// This function is fallible to sudo issues
 pub fn remove_path(path : String) {
     if Path::new(&path).exists() {
         let mut ret: Option<bool> = None;
