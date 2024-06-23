@@ -1,8 +1,5 @@
-use aur::{make_and_install_package, pull_package};
 use mlua::prelude::*;
-use save::overwrite_file;
-use utilities::{check_if_path_exists, create_path};
-use std::{collections::HashMap, process::{self, Command}, time::Instant, vec};
+use std::{collections::HashMap, env, process::{self, Command}, thread::{self, JoinHandle}, time::Instant, vec};
 use colour::*;
 
 mod globals;
@@ -17,8 +14,6 @@ use globals::*;
 
 /*
 BIG TODOS:
-    => If remove fails because it is a dep, mark as dep, but ask the user before doing so
-    => Pull aur repos in parallel, then re-sync to build in order (eg. by assigning each a value determining order, then checking what the current value is on)
     => Allow some tables / functions to not be defined (without causing errors)
 */
 
@@ -78,10 +73,10 @@ fn main() -> Result<(), mlua::Error> {
                 let path_location = value.to_string().unwrap();
                 install_locations.insert(key.to_string().unwrap(), path_location.clone());
 
-                if !check_if_path_exists(path_location.clone()) {
+                if !utilities::check_if_path_exists(path_location.clone()) {
                     yellow!("Warning: ");
                     white_ln!("The directory {} does not exist. Would you like to create it? (entire path will be made) (y/n)", path_location.clone());
-                    create_path(path_location.clone());
+                    utilities::create_path(path_location.clone());
                 }
             },
 
@@ -210,6 +205,42 @@ fn main() -> Result<(), mlua::Error> {
     }
 
     // Installing AUR packages
+    // Parallel checking for updates
+    let current_directory = utilities::get_current_directory();
+    let _res = env::set_current_dir(install_locations["Aur"].clone());
+    let output = utilities::get_children_in_current_directory();
+    let aur_packages = String::from_utf8(output.stdout).unwrap();
+    let aur_packages_vec: Vec<String> = aur_packages.split('\n').map(|x| x.to_string()).filter(|x| x != "").collect();
+    let mut handles: Vec<JoinHandle<String>> = vec![];
+    let mut updated_packages: Vec<String> = Vec::new();
+
+    for package in aur_packages_vec {
+        let install_loc = install_locations["Aur"].clone();
+        let handle = thread::spawn(move || {
+            let needs_update = aur::pull_package(install_loc, package.clone());
+            if needs_update {
+                return package;
+            } else {
+                return "".to_string();
+            }
+        });
+        handles.push(handle);
+    }
+    
+    for handle in handles {
+        let package = handle.join();
+        match package {
+            Ok(package) => {
+                if package != "".to_string() {
+                    updated_packages.push(package);
+                }
+            },
+            Err(_) => (),
+        }
+    }
+    let _res = env::set_current_dir(current_directory);
+
+    // Installing new AUR packages & rebuilding updated AUR packages
     for pair in aur_table.pairs::<mlua::Value, mlua::Value>() {
         let (_key, val) = pair?;
 
@@ -275,9 +306,9 @@ fn main() -> Result<(), mlua::Error> {
                 std::fs::create_dir(&directory)?;
             } else {
                 install_required = false;
-
-                let needs_update = pull_package(install_locations["Aur"].clone(), base_package.clone());
-                if needs_update { make_and_install_package(install_locations["Aur"].clone(), base_package.clone(), sub_packages.clone()) }
+                if updated_packages.contains(&base_package) {
+                    aur::make_and_install_package(install_locations["Aur"].clone(), base_package.clone(), sub_packages.clone());
+                }
             }
         }
 
@@ -323,7 +354,7 @@ fn main() -> Result<(), mlua::Error> {
     white_ln!("Reading previous save file");
 
     let save_file = install_locations["Base"].clone() + "save.king";
-    let save_exist = check_if_path_exists(save_file.clone());
+    let save_exist = utilities::check_if_path_exists(save_file.clone());
 
     // Extracted Content
     let mut current_symlinks: Vec<String> = Vec::new();
@@ -380,7 +411,7 @@ fn main() -> Result<(), mlua::Error> {
     cyan!("Starting: ");
     white_ln!("Updating Save File");
 
-    overwrite_file(save_file.clone(), symlink_msg);
+    save::overwrite_file(save_file.clone(), symlink_msg);
 
     magenta!("Finished: ");
     white_ln!("Updated Save File");

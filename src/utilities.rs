@@ -1,4 +1,4 @@
-use std::{collections::HashMap, fs, io, path::Path, process::{exit, Command}};
+use std::{collections::HashMap, fs, io, path::Path, process::{exit, Command, Output}};
 use super::globals::*;
 use colour::*;
 
@@ -157,4 +157,13 @@ pub fn convert_lua_dictionary_to_hashmap_string(lua_string_dictionary: mlua::Tab
     }
 
     return hashmap;
+}
+
+pub fn get_children_in_current_directory() -> Output {
+    let output = Command::new(unstatic!(AUTH_AGENT))
+    .arg("ls")
+    .output()
+    .expect("Failed to execute command");
+
+    return output;
 }
