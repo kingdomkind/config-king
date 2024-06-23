@@ -1,4 +1,4 @@
-use std::{collections::HashMap, fs, path::Path, process::Command};
+use std::{collections::HashMap, fs, path::{self, Path}, process::Command};
 use colour::*;
 use crate::{unstatic, AUTH_AGENT};
 
@@ -30,11 +30,6 @@ pub fn generate_symlinks(symlinks_table : mlua::Table) -> String {
                 //println!("Debugging: {} {}", link_dir, original_dir);
 
                 // Be aware this needs root permissions to check certain file systems
-                /*
-                if Path::new(&link_dir).exists() {
-                    let metadata = fs::symlink_metadata(&link_dir).unwrap();
-                    already_exist = metadata.file_type().is_symlink();
-                } */
                 let output = Command::new(unstatic!(AUTH_AGENT))
                 .arg("test")
                 .arg("-L")
@@ -49,6 +44,28 @@ pub fn generate_symlinks(symlinks_table : mlua::Table) -> String {
                 //println!("After link dir check {}", already_exist);
 
                 if !already_exist { // Only create the symlink if there's not already one there, we confirmed it was valid in the removal process
+
+                    let path_to_ensure_made = Path::new(&link_dir).parent().unwrap();
+
+                    let output = Command::new(unstatic!(AUTH_AGENT))
+                    .arg("test")
+                    .arg("-d")
+                    .arg(path_to_ensure_made)
+                    .output()
+                    .expect("Failed to execute command");
+
+                    if !output.status.success() {
+                        yellow!("WARNING: ");
+                        white_ln!("The directory {:?} does not exist, would you like to create it? (y/n)", path_to_ensure_made);
+                        let confirm = utilities::get_confirmation();
+                        if confirm {
+                            let mut output = Command::new(unstatic!(AUTH_AGENT));
+                            output.arg("mkdir");
+                            output.arg("-p");
+                            output.arg(path_to_ensure_made);
+                            let _res = utilities::send_output(output);
+                        }
+                    }
 
                     let mut output = Command::new(unstatic!(AUTH_AGENT));
                     output.arg("ln");
