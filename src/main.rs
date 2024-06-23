@@ -15,6 +15,8 @@ use globals::*;
 /*
 BIG TODOS:
     => Allow some tables / functions to not be defined (without causing errors)
+    => Add advanced package support to official packages. Only the base package needs to be checked to be installed, and only the sub-packages need to be checked
+    when removing packages.
 */
 
 /*
