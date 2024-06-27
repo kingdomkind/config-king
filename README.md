@@ -11,7 +11,8 @@ Alongside this, the other main feature is to allow you to create custom symlinks
 - breaking changes will be made where necessary, and will be reflected in an updated config.lua file demonstrating the new syntax alongside the wiki,although it is fairly stable now.
 
 ## How to use / configure
-See the [docs / wiki!](https://github.com/kingdomkind/config-king/blob/main/docs/index.md). Example configuration files are given
+See the [docs / wiki!](https://github.com/kingdomkind/config-king/blob/main/docs/index.md).
+Alternatively, you can see the [config I use](https://github.com/kingdomkind/pika-archconfig).
 
 ## Building / Installation
 Simply clone the repo (git clone https://github.com/kingdomkind/config-king.git), then run "cargo run" in the main project directory. You will need to have rust already installed since this is from source. For long term use, you can add something similar to the following in your bashrc or other shell language (customising it to your needs):
