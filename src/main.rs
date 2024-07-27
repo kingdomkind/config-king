@@ -17,6 +17,7 @@ BIG TODOS:
     => Allow some tables / functions to not be defined (without causing errors)
     => Add advanced package support to official packages. Only the base package needs to be checked to be installed, and only the sub-packages need to be checked
     when removing packages.
+    => Clean up orphaned packages from system packages
 */
 
 /*
@@ -127,7 +128,7 @@ fn main() -> Result<(), mlua::Error> {
     // Checking if we should actually remove the packages, if above the regular warn limit
     let mut should_remove_package : bool = true;
     if (packages_to_remove.len() + flatpak_packages_to_remove.len()) > unstatic!(PACKAGE_REMOVE_WARN_LIMIT).try_into().unwrap() {
-        yellow_ln!("Packages to remove is above the warning limit of {} and are:", unstatic!(PACKAGE_REMOVE_WARN_LIMIT));
+        yellow_ln!("Explicit packages to remove is above the warning limit of {} and are:", unstatic!(PACKAGE_REMOVE_WARN_LIMIT));
 
         for value in &packages_to_remove {
             yellow_ln!("{}", value);
@@ -168,41 +169,56 @@ fn main() -> Result<(), mlua::Error> {
     // Installing official packages
     for pair in official_table.pairs::<mlua::Value, mlua::Value>() {
         let (_key, value) = pair?;
-        match value {
+        let mut base_package: String = String::new();
 
-            mlua::Value::String(string) => {
-                let string_str = string.to_str().unwrap();
-                if system_packages.contains(&string_str.to_string()) {
-                    let index = system_packages.iter().position(|r| r == string_str);
-                    system_packages.remove(index.unwrap());
-                // Dealing with packages that are not expliciity installed, yet declared
-                } else if system_packages_with_non_explicit.contains(&string_str.to_string()) {
-                    official::mark_package_as_explicit(string_str.to_string());
-                } else {
-                    white_ln!("Attempting to install {}", string_str);
+        if value.is_string() {
+            base_package = value.to_string().unwrap();
+        }
 
-                    // Deny if package is in a group, as we cannot track packages installed from groups!
-                    let is_group = official::is_package_group(string_str.to_string());
+        if value.is_table() {
+            let value = value.as_table().unwrap().clone().pairs::<mlua::Value, mlua::Value>();
 
-                    if is_group {
-                        yellow_ln!("SKIPPING: The specified package of \"{}\" is a package group, which is not supported", string_str);
-                        yellow_ln!("Please instead install the packages specified by the group. See specified packages? [y/n]");
-                        let see_packages = utilities::get_confirmation();
-                        if see_packages {
-                            let packages_in_group = official::get_packages_in_group(string_str.to_string());
-                            for value in packages_in_group {
-                                yellow_ln!("{}", value);
-                            }
-                        }
-                        continue;
-                    }
+            for secondary_pair in value {
+                let (secondary_key, secondary_val) = secondary_pair?;
+                let secondary_key = secondary_key.to_string().unwrap();
 
-                    official::install_packages(vec![string_str.to_string()]);
+                match secondary_key.as_str() {
+                    "base" => {
+                        let secondary_val = secondary_val.to_string().unwrap();
+                        base_package = secondary_val;
+                    },
+
+                    _ => {},
                 }
-            },
+            }
+        }
 
-            _ => (),
+        if system_packages.contains(&base_package) {
+            let index = system_packages.iter().position(|r| *r == base_package);
+            system_packages.remove(index.unwrap());
+        // Dealing with packages that are not expliciity installed, yet declared
+        } else if system_packages_with_non_explicit.contains(&base_package) {
+            official::mark_package_as_explicit(base_package);
+        } else {
+            white_ln!("Attempting to install {}", base_package);
 
+            // Deny if package is in a group, as we cannot track packages installed from groups!
+            let is_group = official::is_package_group(base_package.clone());
+
+            if is_group {
+                yellow_ln!("SKIPPING: The specified package of \"{}\" is a package group, which is not supported", base_package);
+                yellow_ln!("Please instead install the packages specified by the group. See specified packages? [y/n]");
+                let see_packages = utilities::get_confirmation();
+                if see_packages {
+                    let packages_in_group = official::get_packages_in_group(base_package);
+                    for value in packages_in_group {
+                        yellow_ln!("{}", value);
+                    }
+                }
+                continue;
+            }
+
+            official::install_packages(vec![base_package]);
         }
     }
 
@@ -221,6 +237,7 @@ fn main() -> Result<(), mlua::Error> {
         let handle = thread::spawn(move || {
             let needs_update = aur::pull_package(install_loc, package.clone());
             if needs_update {
+                println!("{} failed the pull check", package);
                 return package;
             } else {
                 return "".to_string();

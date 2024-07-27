@@ -37,6 +37,19 @@ pub fn install_packages(package_names: Vec<String>) {
 }
 
 pub fn remove_system_packages(package_names: Vec<String>) {
+    // Clean unused deps
+    println!("Removing Unused Dependencies");
+    let command = if unstatic!(ASSUME_YES) {
+        format!("pacman -Qtdq | {} pacman -Rns --noconfirm -", unstatic!(AUTH_AGENT))
+    } else {
+        format!("pacman -Qtdq | {} pacman -Rns -", unstatic!(AUTH_AGENT))
+    };
+
+    let _output = Command::new("sh")
+    .arg("-c")
+    .arg(command)
+    .output();
+
     if package_names.len() > 0 {
         let mut output = Command::new(unstatic!(AUTH_AGENT));
         output.arg("pacman");
