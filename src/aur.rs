@@ -57,7 +57,7 @@ pub fn pull_package(aur_location: String, package: String) -> bool {
     let og_directory = utilities::get_current_directory();
     let _ = env::set_current_dir(aur_location + "/" + &package);
 
-    let _reset = Command::new("git").arg("reset").arg("--hard").output();
+    //let _reset = Command::new("git").arg("reset").arg("--hard").output();
     let output = Command::new("git")
     .arg("pull")
     .output()
